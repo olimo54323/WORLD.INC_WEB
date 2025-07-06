@@ -6,6 +6,10 @@ w głównym folderze
 ```
 cd backend
 ```
+utworzyć wirtualne środowisko (jeśli nie posiadane)
+```
+python -m venv myenv
+```
 ```
 myenv\Scripts\activate
 ```
