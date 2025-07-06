@@ -10,6 +10,7 @@ utworzyć wirtualne środowisko (jeśli nie posiadane)
 ```
 python -m venv myenv
 ```
+uruchomić środowisko
 ```
 myenv\Scripts\activate
 ```
@@ -17,6 +18,7 @@ jeśli nie są zainstalowane paczki
 ```
 pip install -r requirements.txt
 ```
+uruchomić aplikacje
 ```
 python app.py
 ```
