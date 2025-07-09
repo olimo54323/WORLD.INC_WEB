@@ -18,15 +18,37 @@
             <div class="navbar-nav ms-auto">
                 <span class="navbar-text me-3" id="gameTime">22:00</span>
                 <span class="navbar-text me-3" id="playerScore">Points: 0 m</span>
-                <button class="btn btn-outline-info btn-sm me-2" id="wifiBtn">
-                    <i class="fas fa-wifi"></i>
-                </button>
-                <button class="btn btn-outline-warning btn-sm me-2" id="settingsBtn">
-                    <i class="fas fa-cog"></i>
-                </button>
-                <button class="btn btn-outline-danger btn-sm" id="logoutBtn">
-                    <i class="fas fa-sign-out-alt"></i>
-                </button>
+                
+                <!-- Auth Status Display -->
+                <div id="authStatus" class="navbar-text me-3">
+                    <span id="guestStatus">Gość</span>
+                    <span id="userStatus" style="display: none;">
+                        Witaj, <span id="userName"></span>!
+                    </span>
+                </div>
+                
+                <!-- Auth Buttons -->
+                <div id="authButtons">
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-outline-success btn-sm me-2">
+                        <i class="fas fa-sign-in-alt"></i> Zaloguj
+                    </a>
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-outline-info btn-sm me-2">
+                        <i class="fas fa-user-plus"></i> Rejestracja
+                    </a>
+                </div>
+                
+                <!-- Logged In User Buttons -->
+                <div id="userButtons" style="display: none;">
+                    <button class="btn btn-outline-info btn-sm me-2" id="wifiBtn">
+                        <i class="fas fa-wifi"></i>
+                    </button>
+                    <button class="btn btn-outline-warning btn-sm me-2" id="settingsBtn">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                    <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger btn-sm">
+                        <i class="fas fa-sign-out-alt"></i> Wyloguj
+                    </a>
+                </div>
             </div>
         </div>
     </nav>
@@ -51,6 +73,12 @@
                             <strong>Score:</strong> <span id="sidebarScore">0 m</span>
                         </div>
                         
+                        <!-- Auth Status in Sidebar -->
+                        <div class="mb-3">
+                            <strong>Agent:</strong> 
+                            <span id="sidebarAgent" class="badge bg-secondary">Gość</span>
+                        </div>
+                        
                         <hr>
                         
                         <div class="d-grid gap-2">
@@ -66,6 +94,24 @@
                             <button class="btn btn-primary" id="leaderboardBtn">
                                 <i class="fas fa-trophy"></i> Hall of Fame
                             </button>
+                            
+                            <!-- Auth Quick Actions -->
+                            <div id="authQuickActions">
+                                <hr>
+                                <a href="{{ url_for('auth.login') }}" class="btn btn-outline-success w-100 mb-2">
+                                    <i class="fas fa-rocket"></i> Rozpocznij Misję
+                                </a>
+                                <a href="{{ url_for('auth.register') }}" class="btn btn-outline-info w-100">
+                                    <i class="fas fa-user-astronaut"></i> Zostań Agentem
+                                </a>
+                            </div>
+                            
+                            <div id="userQuickActions" style="display: none;">
+                                <hr>
+                                <a href="{{ url_for('auth.profile') }}" class="btn btn-outline-light w-100 mb-2">
+                                    <i class="fas fa-user"></i> Profil Agenta
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -78,6 +124,24 @@
                         <h4><i class="fas fa-globe-americas text-info"></i> World Operations Center</h4>
                     </div>
                     <div class="card-body">
+                        <!-- Welcome Message -->
+                        <div id="welcomeMessage" class="alert alert-primary">
+                            <h5><strong>🌍 Witamy w World.Inc!</strong></h5>
+                            <p class="mb-2">Jesteś na stronie głównej systemu ratowania planety.</p>
+                            <div id="guestWelcome">
+                                <p class="mb-1">
+                                    <strong>Zaloguj się</strong> aby rozpocząć misję lub 
+                                    <strong>zarejestruj się</strong> aby zostać agentem World.Inc!
+                                </p>
+                            </div>
+                            <div id="userWelcome" style="display: none;">
+                                <p class="mb-1">
+                                    Witamy z powrotem, <strong><span id="welcomeUserName"></span></strong>! 
+                                    Gotowy na kolejną misję ratowania świata?
+                                </p>
+                            </div>
+                        </div>
+                        
                         <!-- Status Display -->
                         <div id="statusDisplay" class="alert alert-info">
                             <strong>🌍 World.Inc Systems Loading...</strong>
@@ -92,10 +156,12 @@
                                         <div class="card-body">
                                             <h5><i class="fas fa-bug"></i> Virus Alert</h5>
                                             <p>Dodge incoming cyber threats!</p>
-                                            <button class="btn btn-light" disabled>
+                                            <button class="btn btn-light" id="virusGameBtn" disabled>
                                                 🦠 Virus Dodge
                                             </button>
-                                            <small class="d-block mt-2 text-light">Coming Soon...</small>
+                                            <small class="d-block mt-2 text-light" id="virusGameStatus">
+                                                Zaloguj się aby grać
+                                            </small>
                                         </div>
                                     </div>
                                 </div>
@@ -105,10 +171,12 @@
                                         <div class="card-body">
                                             <h5><i class="fas fa-rocket"></i> Space Defense</h5>
                                             <p>Destroy alien virus invaders!</p>
-                                            <button class="btn btn-light" disabled>
+                                            <button class="btn btn-light" id="spaceGameBtn" disabled>
                                                 🚀 Space Invaders
                                             </button>
-                                            <small class="d-block mt-2 text-light">Coming Soon...</small>
+                                            <small class="d-block mt-2 text-light" id="spaceGameStatus">
+                                                Zaloguj się aby grać
+                                            </small>
                                         </div>
                                     </div>
                                 </div>
@@ -118,10 +186,12 @@
                                         <div class="card-body text-dark">
                                             <h5><i class="fas fa-shield-alt"></i> WiFi Security</h5>
                                             <p>Secure network from hackers!</p>
-                                            <button class="btn btn-dark" disabled>
+                                            <button class="btn btn-dark" id="wifiGameBtn" disabled>
                                                 📶 WiFi Guard
                                             </button>
-                                            <small class="d-block mt-2">Coming Soon...</small>
+                                            <small class="d-block mt-2" id="wifiGameStatus">
+                                                Zaloguj się aby grać
+                                            </small>
                                         </div>
                                     </div>
                                 </div>
@@ -137,7 +207,7 @@
                                         ✅ Backend Structure<br>
                                         ✅ Database Models<br>
                                         ✅ API Framework<br>
-                                        🔲 Authentication System
+                                        ✅ Authentication System
                                     </small>
                                 </div>
                                 <div class="col-md-6">
@@ -162,6 +232,94 @@
     <script>
         // API Base URL
         const API_BASE = '/api';
+        const AUTH_BASE = '/auth';
+        
+        // Check Authentication Status on Page Load
+        async function checkAuthStatus() {
+            try {
+                const response = await fetch(`${AUTH_BASE}/check-auth`);
+                const data = await response.json();
+                
+                if (data.authenticated) {
+                    updateUIForLoggedInUser(data.user);
+                } else {
+                    updateUIForGuest();
+                }
+            } catch (error) {
+                console.error('Auth check failed:', error);
+                updateUIForGuest();
+            }
+        }
+        
+        // Update UI for logged in user
+        function updateUIForLoggedInUser(user) {
+            // Navigation
+            document.getElementById('guestStatus').style.display = 'none';
+            document.getElementById('userStatus').style.display = 'inline';
+            document.getElementById('userName').textContent = user.username;
+            
+            document.getElementById('authButtons').style.display = 'none';
+            document.getElementById('userButtons').style.display = 'block';
+            
+            // Sidebar
+            document.getElementById('sidebarAgent').textContent = user.username;
+            document.getElementById('sidebarAgent').className = 'badge bg-success';
+            
+            document.getElementById('authQuickActions').style.display = 'none';
+            document.getElementById('userQuickActions').style.display = 'block';
+            
+            // Welcome Message
+            document.getElementById('guestWelcome').style.display = 'none';
+            document.getElementById('userWelcome').style.display = 'block';
+            document.getElementById('welcomeUserName').textContent = user.username;
+            
+            // Enable Game Buttons
+            const gameButtons = ['virusGameBtn', 'spaceGameBtn', 'wifiGameBtn'];
+            const gameStatuses = ['virusGameStatus', 'spaceGameStatus', 'wifiGameStatus'];
+            
+            gameButtons.forEach(btnId => {
+                const btn = document.getElementById(btnId);
+                btn.disabled = false;
+                btn.onclick = () => alert('🎮 Minigra ' + btnId.replace('Btn', '') + ' będzie dostępna wkrótce!');
+            });
+            
+            gameStatuses.forEach(statusId => {
+                document.getElementById(statusId).textContent = 'Kliknij aby grać';
+            });
+        }
+        
+        // Update UI for guest
+        function updateUIForGuest() {
+            // Navigation
+            document.getElementById('guestStatus').style.display = 'inline';
+            document.getElementById('userStatus').style.display = 'none';
+            
+            document.getElementById('authButtons').style.display = 'block';
+            document.getElementById('userButtons').style.display = 'none';
+            
+            // Sidebar
+            document.getElementById('sidebarAgent').textContent = 'Gość';
+            document.getElementById('sidebarAgent').className = 'badge bg-secondary';
+            
+            document.getElementById('authQuickActions').style.display = 'block';
+            document.getElementById('userQuickActions').style.display = 'none';
+            
+            // Welcome Message
+            document.getElementById('guestWelcome').style.display = 'block';
+            document.getElementById('userWelcome').style.display = 'none';
+            
+            // Disable Game Buttons
+            const gameButtons = ['virusGameBtn', 'spaceGameBtn', 'wifiGameBtn'];
+            const gameStatuses = ['virusGameStatus', 'spaceGameStatus', 'wifiGameStatus'];
+            
+            gameButtons.forEach(btnId => {
+                document.getElementById(btnId).disabled = true;
+            });
+            
+            gameStatuses.forEach(statusId => {
+                document.getElementById(statusId).textContent = 'Zaloguj się aby grać';
+            });
+        }
         
         // Test API Connection
         async function testConnection() {
@@ -174,7 +332,7 @@
                         <strong>✅ ${data.message}</strong><br>
                         Status: ${data.status}<br>
                         Version: ${data.version}<br>
-                        Database: ${data.database}
+                        Backend: Working perfectly
                     </div>
                 `;
                 
@@ -205,9 +363,9 @@
                     <div class="alert alert-info">
                         <strong>📊 System Status Report</strong><br>
                         Backend: ${data.backend}<br>
-                        Database: ${data.database}<br>
-                        Users in System: ${data.users_count}<br>
-                        Games: ${data.games}
+                        Architecture: ${data.architecture}<br>
+                        Authentication: ✅ Active<br>
+                        Games: 🔲 In Development
                     </div>
                 `;
                 
@@ -228,10 +386,13 @@
             alert('🏆 Hall of Fame coming soon!\nThis will show top players.');
         });
         
-        // Auto-test connection on page load
-        window.addEventListener('load', testConnection);
+        // Auto-test connection and check auth on page load
+        window.addEventListener('load', () => {
+            checkAuthStatus();
+            testConnection();
+        });
         
-        // Update time every second (placeholder)
+        // Update time every second
         setInterval(() => {
             const now = new Date();
             const timeString = now.toLocaleTimeString();

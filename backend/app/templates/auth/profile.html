@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌍 World.Inc - Profil Agenta</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body class="bg-dark text-white">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="{{ url_for('home') }}">
+                <i class="fas fa-globe-americas text-info"></i> WORLD.INC
+            </a>
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text me-3">Agent: {{ user.username }}</span>
+                <a href="{{ url_for('home') }}" class="btn btn-outline-info btn-sm me-2">
+                    <i class="fas fa-home"></i> Centrum Operacji
+                </a>
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger btn-sm">
+                    <i class="fas fa-sign-out-alt"></i> Wyloguj
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <!-- Agent Profile Card -->
+                <div class="card bg-secondary">
+                    <div class="card-header">
+                        <h4><i class="fas fa-user-astronaut text-info"></i> Profil Agenta World.Inc</h4>
+                    </div>
+                    <div class="card-body">
+                        <!-- Flash Messages -->
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{{ 'danger' if category == 'danger' else 'success' if category == 'success' else 'warning' if category == 'warning' else 'info' }}">
+                                        {{ message }}
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+
+                        <div class="row">
+                            <!-- Left Column - Agent Info -->
+                            <div class="col-md-6">
+                                <div class="text-center mb-4">
+                                    <div class="agent-avatar">
+                                        <i class="fas fa-user-circle display-1 text-info"></i>
+                                    </div>
+                                    <h3 class="mt-2">{{ user.username }}</h3>
+                                    <p class="text-muted">Agent World.Inc</p>
+                                </div>
+
+                                <div class="agent-stats">
+                                    <h5><i class="fas fa-chart-bar text-warning"></i> Statystyki Agenta</h5>
+                                    <ul class="list-group list-group-flush bg-transparent">
+                                        <li class="list-group-item bg-transparent text-white d-flex justify-content-between">
+                                            <span><i class="fas fa-calendar-alt text-info"></i> Data dołączenia:</span>
+                                            <span>{{ user.created_at.strftime('%d.%m.%Y') }}</span>
+                                        </li>
+                                        <li class="list-group-item bg-transparent text-white d-flex justify-content-between">
+                                            <span><i class="fas fa-envelope text-info"></i> Email:</span>
+                                            <span>{{ user.email }}</span>
+                                        </li>
+                                        <li class="list-group-item bg-transparent text-white d-flex justify-content-between">
+                                            <span><i class="fas fa-check-circle text-success"></i> Status:</span>
+                                            <span class="badge bg-success">Aktywny</span>
+                                        </li>
+                                        <li class="list-group-item bg-transparent text-white d-flex justify-content-between">
+                                            <span><i class="fas fa-gamepad text-warning"></i> Ukończone misje:</span>
+                                            <span class="badge bg-primary">0</span>
+                                        </li>
+                                        <li class="list-group-item bg-transparent text-white d-flex justify-content-between">
+                                            <span><i class="fas fa-trophy text-warning"></i> Najlepszy wynik:</span>
+                                            <span class="badge bg-warning text-dark">Brak</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <!-- Right Column - Mission History & Actions -->
+                            <div class="col-md-6">
+                                <div class="mission-history mb-4">
+                                    <h5><i class="fas fa-history text-warning"></i> Historia Misji</h5>
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle"></i>
+                                        Nie masz jeszcze ukończonych misji. Rozpocznij swoją pierwszą misję ratowania świata!
+                                    </div>
+                                </div>
+
+                                <div class="agent-actions">
+                                    <h5><i class="fas fa-rocket text-info"></i> Dostępne Akcje</h5>
+                                    <div class="d-grid gap-2">
+                                        <a href="{{ url_for('home') }}" class="btn btn-success">
+                                            <i class="fas fa-play"></i> Rozpocznij Nową Misję
+                                        </a>
+                                        <button class="btn btn-info" onclick="alert('🏆 Ranking będzie dostępny wkrótce!')">
+                                            <i class="fas fa-trophy"></i> Zobacz Ranking
+                                        </button>
+                                        <button class="btn btn-warning" onclick="showChangePasswordModal()">
+                                            <i class="fas fa-key"></i> Zmień Hasło
+                                        </button>
+                                        <button class="btn btn-secondary" onclick="alert('⚙️ Ustawienia będą dostępne wkrótce!')">
+                                            <i class="fas fa-cog"></i> Ustawienia Konta
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Achievements Section -->
+                                <div class="achievements mt-4">
+                                    <h5><i class="fas fa-medal text-warning"></i> Osiągnięcia</h5>
+                                    <div class="row">
+                                        <div class="col-4 text-center">
+                                            <div class="achievement-badge locked">
+                                                <i class="fas fa-rocket"></i>
+                                                <small>Pierwsza Misja</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-4 text-center">
+                                            <div class="achievement-badge locked">
+                                                <i class="fas fa-bug"></i>
+                                                <small>Łowca Wirusów</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-4 text-center">
+                                            <div class="achievement-badge locked">
+                                                <i class="fas fa-shield-alt"></i>
+                                                <small>Obrońca WiFi</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="row mt-4">
+                    <div class="col-md-4">
+                        <div class="card bg-info h-100">
+                            <div class="card-body text-center">
+                                <i class="fas fa-globe-americas display-4"></i>
+                                <h5 class="mt-2">Centrum Operacji</h5>
+                                <p>Wróć do głównego centrum sterowania</p>
+                                <a href="{{ url_for('home') }}" class="btn btn-light">
+                                    <i class="fas fa-arrow-right"></i> Przejdź
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-success h-100">
+                            <div class="card-body text-center">
+                                <i class="fas fa-gamepad display-4"></i>
+                                <h5 class="mt-2">Nowa Misja</h5>
+                                <p>Rozpocznij nową misję ratowania planety</p>
+                                <button class="btn btn-light" onclick="alert('🎮 Gry będą dostępne wkrótce!')">
+                                    <i class="fas fa-play"></i> Start
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-warning h-100">
+                            <div class="card-body text-center text-dark">
+                                <i class="fas fa-trophy display-4"></i>
+                                <h5 class="mt-2">Ranking</h5>
+                                <p>Zobacz najlepszych agentów World.Inc</p>
+                                <button class="btn btn-dark" onclick="alert('🏆 Ranking będzie dostępny wkrótce!')">
+                                    <i class="fas fa-list"></i> Zobacz
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div class="modal fade" id="changePasswordModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content bg-dark text-white">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-key text-warning"></i> Zmiana Hasła
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="changePasswordForm">
+                        <div class="mb-3">
+                            <label class="form-label">Obecne hasło</label>
+                            <input type="password" class="form-control" id="currentPassword" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Nowe hasło</label>
+                            <input type="password" class="form-control" id="newPassword" required minlength="6">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Potwierdź nowe hasło</label>
+                            <input type="password" class="form-control" id="confirmPassword" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+                    <button type="button" class="btn btn-primary" onclick="changePassword()">
+                        <i class="fas fa-save"></i> Zapisz
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <style>
+        .agent-avatar {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            border-radius: 50%;
+            padding: 1rem;
+            display: inline-block;
+        }
+        
+        .achievement-badge {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .achievement-badge.locked {
+            opacity: 0.5;
+        }
+        
+        .achievement-badge i {
+            font-size: 1.5rem;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+        
+        .achievement-badge small {
+            font-size: 0.7rem;
+        }
+    </style>
+    
+    <script>
+        function showChangePasswordModal() {
+            const modal = new bootstrap.Modal(document.getElementById('changePasswordModal'));
+            modal.show();
+        }
+        
+        function changePassword() {
+            const currentPassword = document.getElementById('currentPassword').value;
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                alert('Wszystkie pola są wymagane');
+                return;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                alert('Nowe hasła nie są identyczne');
+                return;
+            }
+            
+            if (newPassword.length < 6) {
+                alert('Nowe hasło musi mieć co najmniej 6 znaków');
+                return;
+            }
+            
+            // TODO: Implementacja zmiany hasła przez API
+            alert('🔧 Funkcja zmiany hasła będzie dostępna wkrótce!');
+            
+            // Zamknij modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('changePasswordModal'));
+            modal.hide();
+            
+            // Wyczyść formularz
+            document.getElementById('changePasswordForm').reset();
+        }
+    </script>
+</body>
+</html>

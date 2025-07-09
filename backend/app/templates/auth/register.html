@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌍 World.Inc - Rejestracja</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body class="auth-body">
+    <!-- Background Animation -->
+    <div class="auth-background">
+        <div class="floating-icon" style="--delay: 0s; --duration: 8s;">
+            <i class="fas fa-globe-americas"></i>
+        </div>
+        <div class="floating-icon" style="--delay: 2s; --duration: 10s;">
+            <i class="fas fa-shield-alt"></i>
+        </div>
+        <div class="floating-icon" style="--delay: 4s; --duration: 12s;">
+            <i class="fas fa-rocket"></i>
+        </div>
+        <div class="floating-icon" style="--delay: 6s; --duration: 9s;">
+            <i class="fas fa-bug"></i>
+        </div>
+        <div class="floating-icon" style="--delay: 1s; --duration: 11s;">
+            <i class="fas fa-wifi"></i>
+        </div>
+    </div>
+
+    <div class="auth-container">
+        <!-- Logo Section -->
+        <div class="auth-logo">
+            <i class="fas fa-globe-americas text-info"></i>
+            <h1 class="auth-title">WORLD.INC</h1>
+            <p class="auth-subtitle">🚀 Zostań agentem i uratuj świat!</p>
+        </div>
+
+        <!-- Registration Form -->
+        <div class="auth-card">
+            <div class="auth-card-header">
+                <i class="fas fa-user-plus"></i>
+                <h3>Rekrutacja Agenta</h3>
+                <p>Dołącz do misji ratowania planety</p>
+            </div>
+
+            <div class="auth-card-body">
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'danger' else 'success' if category == 'success' else 'warning' if category == 'warning' else 'info' }} auth-alert">
+                                {% if category == 'success' %}
+                                    <i class="fas fa-check-circle"></i>
+                                {% elif category == 'danger' %}
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                {% elif category == 'warning' %}
+                                    <i class="fas fa-exclamation-circle"></i>
+                                {% else %}
+                                    <i class="fas fa-info-circle"></i>
+                                {% endif %}
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <form method="POST" id="registerForm" class="auth-form">
+                    <div class="auth-field">
+                        <label for="username" class="auth-label">
+                            <i class="fas fa-user"></i> Nazwa Agenta
+                        </label>
+                        <input 
+                            type="text" 
+                            class="auth-input" 
+                            id="username" 
+                            name="username" 
+                            placeholder="Agent007"
+                            required
+                            minlength="3"
+                            maxlength="20"
+                            autocomplete="username"
+                        >
+                        <div class="auth-field-help">
+                            Minimum 3 znaki, maksimum 20 znaków
+                        </div>
+                    </div>
+
+                    <div class="auth-field">
+                        <label for="email" class="auth-label">
+                            <i class="fas fa-envelope"></i> Email Służbowy
+                        </label>
+                        <input 
+                            type="email" 
+                            class="auth-input" 
+                            id="email" 
+                            name="email" 
+                            placeholder="agent@world.inc"
+                            required
+                            autocomplete="email"
+                        >
+                        <div class="auth-field-help">
+                            Używany do logowania i komunikacji
+                        </div>
+                    </div>
+
+                    <div class="auth-field">
+                        <label for="password" class="auth-label">
+                            <i class="fas fa-lock"></i> Hasło Dostępu
+                        </label>
+                        <div class="auth-password-field">
+                            <input 
+                                type="password" 
+                                class="auth-input" 
+                                id="password" 
+                                name="password" 
+                                placeholder="••••••••"
+                                required
+                                minlength="6"
+                                autocomplete="new-password"
+                            >
+                            <button type="button" class="password-toggle" onclick="togglePassword('password')">
+                                <i class="fas fa-eye" id="password-eye"></i>
+                            </button>
+                        </div>
+                        <div class="auth-field-help">
+                            Minimum 6 znaków - chroń dostęp do misji
+                        </div>
+                    </div>
+
+                    <div class="auth-field">
+                        <label for="confirm_password" class="auth-label">
+                            <i class="fas fa-lock"></i> Potwierdź Hasło
+                        </label>
+                        <div class="auth-password-field">
+                            <input 
+                                type="password" 
+                                class="auth-input" 
+                                id="confirm_password" 
+                                name="confirm_password" 
+                                placeholder="••••••••"
+                                required
+                                autocomplete="new-password"
+                            >
+                            <button type="button" class="password-toggle" onclick="togglePassword('confirm_password')">
+                                <i class="fas fa-eye" id="confirm_password-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Terms Agreement -->
+                    <div class="auth-checkbox">
+                        <input type="checkbox" id="terms" required>
+                        <label for="terms">
+                            Akceptuję <strong>Regulamin World.Inc</strong> i zobowiązuję się do ochrony planety
+                        </label>
+                    </div>
+
+                    <button type="submit" class="auth-btn auth-btn-primary">
+                        <i class="fas fa-rocket"></i>
+                        Dołącz do World.Inc
+                    </button>
+                </form>
+
+                <div class="auth-divider">
+                    <span>lub</span>
+                </div>
+
+                <div class="auth-links">
+                    <p>Masz już konto agenta?</p>
+                    <a href="{{ url_for('auth.login') }}" class="auth-link-btn">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Zaloguj się do misji
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Back to Home -->
+        <div class="auth-back">
+            <a href="{{ url_for('home') }}" class="auth-back-link">
+                <i class="fas fa-arrow-left"></i>
+                Powrót do strony głównej
+            </a>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Toggle password visibility
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
+            const eye = document.getElementById(fieldId + '-eye');
+            
+            if (field.type === 'password') {
+                field.type = 'text';
+                eye.className = 'fas fa-eye-slash';
+            } else {
+                field.type = 'password';
+                eye.className = 'fas fa-eye';
+            }
+        }
+
+        // Form validation and submission
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+            const terms = document.getElementById('terms').checked;
+            
+            // Basic validation
+            if (!username || !email || !password || !confirmPassword) {
+                showAlert('Wszystkie pola są wymagane', 'danger');
+                return;
+            }
+            
+            if (username.length < 3) {
+                showAlert('Nazwa agenta musi mieć co najmniej 3 znaki', 'danger');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showAlert('Hasło musi mieć co najmniej 6 znaków', 'danger');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                showAlert('Hasła nie są identyczne', 'danger');
+                return;
+            }
+            
+            if (!terms) {
+                showAlert('Musisz zaakceptować regulamin World.Inc', 'danger');
+                return;
+            }
+            
+            // Show loading state
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Tworzenie konta...';
+            submitBtn.disabled = true;
+            
+            // Submit form
+            setTimeout(() => {
+                this.submit();
+            }, 500);
+        });
+
+        // Real-time password confirmation validation
+        document.getElementById('confirm_password').addEventListener('input', function() {
+            const password = document.getElementById('password').value;
+            const confirmPassword = this.value;
+            
+            if (confirmPassword && password !== confirmPassword) {
+                this.setCustomValidity('Hasła nie są identyczne');
+                this.classList.add('is-invalid');
+            } else {
+                this.setCustomValidity('');
+                this.classList.remove('is-invalid');
+            }
+        });
+
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} auth-alert`;
+            alertDiv.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i>
+                ${message}
+            `;
+            
+            const form = document.querySelector('.auth-form');
+            form.insertBefore(alertDiv, form.firstChild);
+            
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+
+        // Auto-focus first input
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('username').focus();
+        });
+    </script>
+</body>
+</html>
