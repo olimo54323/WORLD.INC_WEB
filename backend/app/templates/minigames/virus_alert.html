@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🦠 World.Inc - Virus Alert</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body class="game-body">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="{{ url_for('home') }}">
+                <i class="fas fa-globe-americas text-info"></i> WORLD.INC
+            </a>
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text me-3">
+                    <i class="fas fa-bug text-danger"></i> Virus Alert
+                </span>
+                <span class="navbar-text me-3" id="gameScore">Score: 0</span>
+                <span class="navbar-text me-3" id="gameTime">Time: {{ game_config.game_duration }}</span>
+                <a href="{{ url_for('minigames.index') }}" class="btn btn-outline-light btn-sm">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Game Container -->
+    <div class="game-container" id="gameContainer">
+        <!-- Mobile Controls Instructions -->
+        <div class="mobile-instructions" id="mobileInstructions" style="display: none;">
+            <div class="alert alert-info">
+                <h6><i class="fas fa-mobile-alt"></i> Mobile Controls</h6>
+                <p class="mb-0">Dotknij i przeciągnij serce, aby unikać wirusów!</p>
+            </div>
+        </div>
+
+        <!-- Desktop Controls Instructions -->
+        <div class="desktop-instructions" id="desktopInstructions">
+            <div class="alert alert-info">
+                <h6><i class="fas fa-keyboard"></i> Desktop Controls</h6>
+                <p class="mb-0">Użyj WASD lub strzałek, aby poruszać sercem i unikać wirusów!</p>
+            </div>
+        </div>
+
+        <!-- Game Status -->
+        <div class="game-status">
+            <div class="row">
+                <div class="col-4">
+                    <div class="status-card">
+                        <i class="fas fa-heart text-danger"></i>
+                        <span id="playerHealth">100</span>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="status-card">
+                        <i class="fas fa-trophy text-warning"></i>
+                        <span id="currentScore">0</span>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="status-card">
+                        <i class="fas fa-clock text-info"></i>
+                        <span id="timeLeft">{{ game_config.game_duration }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Canvas -->
+        <div class="game-canvas-container">
+            <canvas id="gameCanvas" width="800" height="600"></canvas>
+            
+            <!-- Game Overlay -->
+            <div class="game-overlay" id="gameOverlay">
+                <!-- Start Screen -->
+                <div class="overlay-screen" id="startScreen">
+                    <div class="screen-content">
+                        <i class="fas fa-bug game-icon"></i>
+                        <h2>Virus Alert</h2>
+                        <p>Unikaj wirusów przez {{ game_config.game_duration }} sekund!</p>
+                        <p class="difficulty-info">
+                            <i class="fas fa-chart-line"></i> 
+                            Poziom: {{ game_config.difficulty }} | 
+                            Wirusów: {{ game_config.viruses_count }}
+                        </p>
+                        <button class="btn btn-success btn-lg" onclick="startGame()">
+                            <i class="fas fa-play"></i> Rozpocznij Grę
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Countdown Screen -->
+                <div class="overlay-screen" id="countdownScreen" style="display: none;">
+                    <div class="screen-content">
+                        <h1 id="countdownNumber">3</h1>
+                        <p>Przygotuj się...</p>
+                    </div>
+                </div>
+
+                <!-- Game Over Screen -->
+                <div class="overlay-screen" id="gameOverScreen" style="display: none;">
+                    <div class="screen-content">
+                        <i class="fas fa-trophy game-icon" id="gameIcon"></i>
+                        <h2 id="gameResultTitle">Gra Zakończona</h2>
+                        <div class="result-stats">
+                            <div class="stat-item">
+                                <i class="fas fa-trophy"></i>
+                                <span>Wynik: <strong id="finalScore">0</strong></span>
+                            </div>
+                            <div class="stat-item">
+                                <i class="fas fa-clock"></i>
+                                <span>Czas: <strong id="finalTime">0s</strong></span>
+                            </div>
+                            <div class="stat-item">
+                                <i class="fas fa-heart"></i>
+                                <span>Trafienia: <strong id="finalHits">0</strong></span>
+                            </div>
+                        </div>
+                        <div class="game-actions">
+                            <button class="btn btn-success" onclick="restartGame()">
+                                <i class="fas fa-redo"></i> Zagraj Ponownie
+                            </button>
+                            <a href="{{ url_for('minigames.leaderboard', game='virus_alert') }}" class="btn btn-info">
+                                <i class="fas fa-list"></i> Ranking
+                            </a>
+                            <a href="{{ url_for('minigames.index') }}" class="btn btn-outline-light">
+                                <i class="fas fa-home"></i> Menu Główne
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pause Screen -->
+                <div class="overlay-screen" id="pauseScreen" style="display: none;">
+                    <div class="screen-content">
+                        <i class="fas fa-pause game-icon"></i>
+                        <h2>Gra Wstrzymana</h2>
+                        <div class="game-actions">
+                            <button class="btn btn-success" onclick="resumeGame()">
+                                <i class="fas fa-play"></i> Wznów Grę
+                            </button>
+                            <button class="btn btn-danger" onclick="endGame()">
+                                <i class="fas fa-stop"></i> Zakończ Grę
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Touch Controls -->
+        <div class="mobile-controls" id="mobileControls" style="display: none;">
+            <div class="touch-info">
+                <i class="fas fa-hand-pointer"></i>
+                <span>Przeciągnij serce palcem</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Game Configuration
+        const GAME_CONFIG = {
+            viruses_count: {{ game_config.viruses_count }},
+            game_duration: {{ game_config.game_duration }},
+            difficulty: {{ game_config.difficulty }},
+            points_per_second: {{ game_config.points_per_second }},
+            penalty_per_hit: {{ game_config.penalty_per_hit }}
+        };
+
+        // Game State
+        let gameState = {
+            isRunning: false,
+            isPaused: false,
+            startTime: null,
+            score: 0,
+            timeLeft: GAME_CONFIG.game_duration,
+            hits: 0,
+            sessionId: null
+        };
+
+        // Canvas and Context
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Device Detection
+        let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        let isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
+        // Player Object
+        const player = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            size: 30,
+            color: '#ff4757',
+            speed: isMobile ? 4 : 5,
+            health: 100
+        };
+
+        // Viruses Array
+        let viruses = [];
+
+        // Input Handling
+        const keys = {};
+        let mousePos = { x: 0, y: 0 };
+        let isDragging = false;
+
+        // Initialize Game
+        function initGame() {
+            // Adjust canvas size for mobile
+            if (isMobile) {
+                const container = document.querySelector('.game-canvas-container');
+                const containerWidth = container.clientWidth;
+                const containerHeight = container.clientHeight;
+                
+                canvas.width = Math.min(containerWidth - 20, 400);
+                canvas.height = Math.min(containerHeight - 100, 500);
+                
+                // Show mobile instructions
+                document.getElementById('mobileInstructions').style.display = 'block';
+                document.getElementById('desktopInstructions').style.display = 'none';
+                document.getElementById('mobileControls').style.display = 'block';
+            } else {
+                canvas.width = 800;
+                canvas.height = 600;
+            }
+
+            // Reset player position
+            player.x = canvas.width / 2;
+            player.y = canvas.height / 2;
+
+            // Send device info to server
+            sendDeviceInfo();
+        }
+
+        // Send Device Info
+        function sendDeviceInfo() {
+            fetch('/minigames/api/device-info', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    is_mobile: isMobile,
+                    has_gyroscope: 'DeviceOrientationEvent' in window,
+                    screen_width: screen.width,
+                    screen_height: screen.height
+                })
+            });
+        }
+
+        // Start Game
+        async function startGame() {
+            try {
+                // Start game session
+                const response = await fetch('/minigames/api/start-game', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        game_type: 'virus_alert',
+                        difficulty: GAME_CONFIG.difficulty
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    gameState.sessionId = data.session_id;
+                    showCountdown();
+                } else {
+                    alert('Błąd podczas rozpoczynania gry: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error starting game:', error);
+                alert('Błąd połączenia z serwerem');
+            }
+        }
+
+        // Show Countdown
+        function showCountdown() {
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('countdownScreen').style.display = 'flex';
+
+            let count = 3;
+            const countdownElement = document.getElementById('countdownNumber');
+
+            const countdownInterval = setInterval(() => {
+                countdownElement.textContent = count;
+                count--;
+
+                if (count < 0) {
+                    clearInterval(countdownInterval);
+                    document.getElementById('countdownScreen').style.display = 'none';
+                    beginGame();
+                }
+            }, 1000);
+        }
+
+        // Begin Game
+        function beginGame() {
+            gameState.isRunning = true;
+            gameState.startTime = Date.now();
+            gameState.score = 0;
+            gameState.timeLeft = GAME_CONFIG.game_duration;
+            gameState.hits = 0;
+            player.health = 100;
+
+            // Reset player position
+            player.x = canvas.width / 2;
+            player.y = canvas.height / 2;
+
+            // Create viruses
+            createViruses();
+
+            // Start game loop
+            gameLoop();
+            
+            // Start timer
+            startTimer();
+        }
+
+        // Create Viruses
+        function createViruses() {
+            viruses = [];
+            for (let i = 0; i < GAME_CONFIG.viruses_count; i++) {
+                let virus;
+                do {
+                    virus = {
+                        x: Math.random() * (canvas.width - 40) + 20,
+                        y: Math.random() * (canvas.height - 40) + 20,
+                        size: 20 + Math.random() * 15,
+                        color: `hsl(${Math.random() * 60 + 90}, 70%, 50%)`, // Green-yellow colors
+                        speedX: (Math.random() - 0.5) * (2 + GAME_CONFIG.difficulty * 0.5),
+                        speedY: (Math.random() - 0.5) * (2 + GAME_CONFIG.difficulty * 0.5),
+                        rotation: 0,
+                        rotationSpeed: (Math.random() - 0.5) * 0.2
+                    };
+                } while (getDistance(virus, player) < 100); // Ensure viruses don't spawn too close to player
+
+                viruses.push(virus);
+            }
+        }
+
+        // Game Loop
+        function gameLoop() {
+            if (!gameState.isRunning || gameState.isPaused) return;
+
+            // Clear canvas
+            ctx.fillStyle = '#0a0a0a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Update and draw viruses
+            updateViruses();
+            drawViruses();
+
+            // Update and draw player
+            updatePlayer();
+            drawPlayer();
+
+            // Check collisions
+            checkCollisions();
+
+            // Update score
+            updateScore();
+
+            // Continue game loop
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Update Viruses
+        function updateViruses() {
+            viruses.forEach(virus => {
+                // Move virus
+                virus.x += virus.speedX;
+                virus.y += virus.speedY;
+
+                // Rotate virus
+                virus.rotation += virus.rotationSpeed;
+
+                // Bounce off walls
+                if (virus.x <= virus.size/2 || virus.x >= canvas.width - virus.size/2) {
+                    virus.speedX = -virus.speedX;
+                }
+                if (virus.y <= virus.size/2 || virus.y >= canvas.height - virus.size/2) {
+                    virus.speedY = -virus.speedY;
+                }
+
+                // Keep in bounds
+                virus.x = Math.max(virus.size/2, Math.min(canvas.width - virus.size/2, virus.x));
+                virus.y = Math.max(virus.size/2, Math.min(canvas.height - virus.size/2, virus.y));
+
+                // Virus collision with each other
+                viruses.forEach(otherVirus => {
+                    if (virus !== otherVirus) {
+                        const distance = getDistance(virus, otherVirus);
+                        const minDistance = (virus.size + otherVirus.size) / 2;
+                        
+                        if (distance < minDistance) {
+                            // Simple bounce
+                            const dx = virus.x - otherVirus.x;
+                            const dy = virus.y - otherVirus.y;
+                            const angle = Math.atan2(dy, dx);
+                            
+                            virus.speedX = Math.cos(angle) * Math.abs(virus.speedX);
+                            virus.speedY = Math.sin(angle) * Math.abs(virus.speedY);
+                            otherVirus.speedX = -Math.cos(angle) * Math.abs(otherVirus.speedX);
+                            otherVirus.speedY = -Math.sin(angle) * Math.abs(otherVirus.speedY);
+                        }
+                    }
+                });
+            });
+        }
+
+        // Draw Viruses
+        function drawViruses() {
+            viruses.forEach(virus => {
+                ctx.save();
+                ctx.translate(virus.x, virus.y);
+                ctx.rotate(virus.rotation);
+                
+                // Draw virus body
+                ctx.fillStyle = virus.color;
+                ctx.beginPath();
+                ctx.arc(0, 0, virus.size/2, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Draw virus spikes
+                ctx.strokeStyle = virus.color;
+                ctx.lineWidth = 3;
+                for (let i = 0; i < 8; i++) {
+                    const angle = (i / 8) * Math.PI * 2;
+                    const spikeLength = virus.size/3;
+                    ctx.beginPath();
+                    ctx.moveTo(Math.cos(angle) * virus.size/2, Math.sin(angle) * virus.size/2);
+                    ctx.lineTo(Math.cos(angle) * (virus.size/2 + spikeLength), Math.sin(angle) * (virus.size/2 + spikeLength));
+                    ctx.stroke();
+                }
+
+                ctx.restore();
+            });
+        }
+
+        // Update Player
+        function updatePlayer() {
+            if (isMobile && isTouch) {
+                // Touch control handled in event listeners
+                return;
+            }
+
+            // Keyboard controls
+            if (keys['w'] || keys['W'] || keys['ArrowUp']) {
+                player.y = Math.max(player.size/2, player.y - player.speed);
+            }
+            if (keys['s'] || keys['S'] || keys['ArrowDown']) {
+                player.y = Math.min(canvas.height - player.size/2, player.y + player.speed);
+            }
+            if (keys['a'] || keys['A'] || keys['ArrowLeft']) {
+                player.x = Math.max(player.size/2, player.x - player.speed);
+            }
+            if (keys['d'] || keys['D'] || keys['ArrowRight']) {
+                player.x = Math.min(canvas.width - player.size/2, player.x + player.speed);
+            }
+        }
+
+        // Draw Player
+        function drawPlayer() {
+            ctx.fillStyle = player.color;
+            ctx.beginPath();
+            
+            // Draw heart shape
+            const x = player.x;
+            const y = player.y;
+            const size = player.size;
+            
+            ctx.moveTo(x, y + size/4);
+            ctx.bezierCurveTo(x, y - size/4, x - size/2, y - size/4, x - size/2, y);
+            ctx.bezierCurveTo(x - size/2, y + size/4, x, y + size/2, x, y + size/2);
+            ctx.bezierCurveTo(x, y + size/2, x + size/2, y + size/4, x + size/2, y);
+            ctx.bezierCurveTo(x + size/2, y - size/4, x, y - size/4, x, y + size/4);
+            
+            ctx.fill();
+
+            // Draw health indicator
+            if (player.health < 100) {
+                ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+        }
+
+        // Check Collisions
+        function checkCollisions() {
+            viruses.forEach(virus => {
+                const distance = getDistance(player, virus);
+                const collisionDistance = (player.size + virus.size) / 2 - 5; // Small overlap tolerance
+                
+                if (distance < collisionDistance) {
+                    // Player hit by virus
+                    gameState.hits++;
+                    player.health = Math.max(0, player.health - 20);
+                    
+                    // Update UI
+                    document.getElementById('playerHealth').textContent = player.health;
+                    document.getElementById('finalHits').textContent = gameState.hits;
+                    
+                    // Push virus away to prevent multiple hits
+                    const dx = virus.x - player.x;
+                    const dy = virus.y - player.y;
+                    const pushDistance = collisionDistance + 10;
+                    const distance_norm = Math.sqrt(dx*dx + dy*dy);
+                    
+                    virus.x = player.x + (dx/distance_norm) * pushDistance;
+                    virus.y = player.y + (dy/distance_norm) * pushDistance;
+                    
+                    // Bounce virus away
+                    virus.speedX = (dx/distance_norm) * 3;
+                    virus.speedY = (dy/distance_norm) * 3;
+                    
+                    // Screen shake effect
+                    canvas.style.transform = 'translate(2px, 2px)';
+                    setTimeout(() => {
+                        canvas.style.transform = 'translate(0, 0)';
+                    }, 100);
+                    
+                    // Check if player is defeated
+                    if (player.health <= 0) {
+                        endGame();
+                    }
+                }
+            });
+        }
+
+        // Update Score
+        function updateScore() {
+            if (gameState.isRunning) {
+                gameState.score = Math.max(0, 
+                    Math.floor((Date.now() - gameState.startTime) / 1000) * GAME_CONFIG.points_per_second 
+                    - gameState.hits * GAME_CONFIG.penalty_per_hit
+                );
+                
+                document.getElementById('currentScore').textContent = gameState.score;
+                document.getElementById('gameScore').textContent = `Score: ${gameState.score}`;
+            }
+        }
+
+        // Start Timer
+        function startTimer() {
+            const timerInterval = setInterval(() => {
+                if (!gameState.isRunning || gameState.isPaused) return;
+                
+                gameState.timeLeft--;
+                document.getElementById('timeLeft').textContent = gameState.timeLeft;
+                document.getElementById('gameTime').textContent = `Time: ${gameState.timeLeft}`;
+                
+                if (gameState.timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        // End Game
+        async function endGame() {
+            gameState.isRunning = false;
+            
+            // Calculate final score
+            const survivalTime = GAME_CONFIG.game_duration - gameState.timeLeft;
+            const finalScore = Math.max(0, 
+                survivalTime * GAME_CONFIG.points_per_second 
+                - gameState.hits * GAME_CONFIG.penalty_per_hit
+                + (gameState.timeLeft > 0 ? 100 * GAME_CONFIG.difficulty : 0) // Completion bonus
+            );
+            
+            gameState.score = finalScore;
+            
+            // Update final stats
+            document.getElementById('finalScore').textContent = finalScore;
+            document.getElementById('finalTime').textContent = survivalTime + 's';
+            document.getElementById('finalHits').textContent = gameState.hits;
+            
+            // Determine game result
+            const gameIcon = document.getElementById('gameIcon');
+            const gameTitle = document.getElementById('gameResultTitle');
+            
+            if (gameState.timeLeft > 0 && gameState.hits === 0) {
+                gameIcon.className = 'fas fa-crown game-icon text-warning';
+                gameTitle.textContent = 'Perfekcyjne Wykonanie!';
+            } else if (gameState.timeLeft > 0) {
+                gameIcon.className = 'fas fa-trophy game-icon text-success';
+                gameTitle.textContent = 'Misja Ukończona!';
+            } else if (player.health > 0) {
+                gameIcon.className = 'fas fa-clock game-icon text-info';
+                gameTitle.textContent = 'Czas Minął!';
+            } else {
+                gameIcon.className = 'fas fa-skull game-icon text-danger';
+                gameTitle.textContent = 'Wirusy Wygrały!';
+            }
+            
+            // Send results to server
+            try {
+                const response = await fetch('/minigames/api/finish-game', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        session_id: gameState.sessionId,
+                        score: finalScore,
+                        game_data: {
+                            survival_time: survivalTime,
+                            hits_taken: gameState.hits,
+                            difficulty: GAME_CONFIG.difficulty,
+                            completed: gameState.timeLeft > 0
+                        }
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success && data.rank) {
+                    // Show rank info
+                    const rankInfo = document.createElement('div');
+                    rankInfo.className = 'stat-item';
+                    rankInfo.innerHTML = `<i class="fas fa-medal"></i><span>Pozycja: <strong>#${data.rank}</strong></span>`;
+                    document.querySelector('.result-stats').appendChild(rankInfo);
+                }
+            } catch (error) {
+                console.error('Error finishing game:', error);
+            }
+            
+            // Show game over screen
+            document.getElementById('gameOverScreen').style.display = 'flex';
+        }
+
+        // Restart Game
+        function restartGame() {
+            // Hide game over screen
+            document.getElementById('gameOverScreen').style.display = 'none';
+            document.getElementById('startScreen').style.display = 'flex';
+            
+            // Reset game state
+            gameState = {
+                isRunning: false,
+                isPaused: false,
+                startTime: null,
+                score: 0,
+                timeLeft: GAME_CONFIG.game_duration,
+                hits: 0,
+                sessionId: null
+            };
+            
+            // Reset UI
+            document.getElementById('currentScore').textContent = '0';
+            document.getElementById('gameScore').textContent = 'Score: 0';
+            document.getElementById('timeLeft').textContent = GAME_CONFIG.game_duration;
+            document.getElementById('gameTime').textContent = `Time: ${GAME_CONFIG.game_duration}`;
+            document.getElementById('playerHealth').textContent = '100';
+            
+            // Reset player
+            player.x = canvas.width / 2;
+            player.y = canvas.height / 2;
+            player.health = 100;
+            
+            // Clear canvas
+            ctx.fillStyle = '#0a0a0a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // Pause Game
+        function pauseGame() {
+            if (gameState.isRunning && !gameState.isPaused) {
+                gameState.isPaused = true;
+                document.getElementById('pauseScreen').style.display = 'flex';
+            }
+        }
+
+        // Resume Game
+        function resumeGame() {
+            if (gameState.isPaused) {
+                gameState.isPaused = false;
+                document.getElementById('pauseScreen').style.display = 'none';
+                gameLoop();
+            }
+        }
+
+        // Utility Functions
+        function getDistance(obj1, obj2) {
+            const dx = obj1.x - obj2.x;
+            const dy = obj1.y - obj2.y;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        // Event Listeners
+        window.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+            
+            // Prevent default for game keys
+            if (['w', 'a', 's', 'd', 'W', 'A', 'S', 'D', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                e.preventDefault();
+            }
+            
+            // Pause game with Escape
+            if (e.key === 'Escape') {
+                pauseGame();
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+
+        // Mouse/Touch Events for Mobile
+        function getCanvasPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            
+            return {
+                x: (clientX - rect.left) * (canvas.width / rect.width),
+                y: (clientY - rect.top) * (canvas.height / rect.height)
+            };
+        }
+
+        // Touch Events
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (!gameState.isRunning) return;
+            
+            const pos = getCanvasPos(e);
+            const distance = getDistance(player, pos);
+            
+            if (distance < player.size) {
+                isDragging = true;
+            }
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (!gameState.isRunning || !isDragging) return;
+            
+            const pos = getCanvasPos(e);
+            
+            // Move player to touch position with bounds checking
+            player.x = Math.max(player.size/2, Math.min(canvas.width - player.size/2, pos.x));
+            player.y = Math.max(player.size/2, Math.min(canvas.height - player.size/2, pos.y));
+        });
+
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            isDragging = false;
+        });
+
+        // Mouse Events for Desktop
+        canvas.addEventListener('mousedown', (e) => {
+            if (!gameState.isRunning) return;
+            
+            const pos = getCanvasPos(e);
+            const distance = getDistance(player, pos);
+            
+            if (distance < player.size) {
+                isDragging = true;
+            }
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (!gameState.isRunning || !isDragging) return;
+            
+            const pos = getCanvasPos(e);
+            
+            player.x = Math.max(player.size/2, Math.min(canvas.width - player.size/2, pos.x));
+            player.y = Math.max(player.size/2, Math.min(canvas.height - player.size/2, pos.y));
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        // Prevent context menu on canvas
+        canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+        // Window Events
+        window.addEventListener('blur', pauseGame);
+        
+        window.addEventListener('resize', () => {
+            if (isMobile) {
+                initGame();
+            }
+        });
+
+        // Initialize when page loads
+        window.addEventListener('load', initGame);
+    </script>
+</body>
+</html>

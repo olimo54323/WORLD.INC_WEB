@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🚀 World.Inc - Space Defence</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body class="game-body">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="{{ url_for('home') }}">
+                <i class="fas fa-globe-americas text-info"></i> WORLD.INC
+            </a>
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text me-3">
+                    <i class="fas fa-rocket text-info"></i> Space Defence
+                </span>
+                <span class="navbar-text me-3" id="gameScore">Score: 0</span>
+                <span class="navbar-text me-3" id="gameTime">Time: {{ game_config.game_duration }}</span>
+                <a href="{{ url_for('minigames.index') }}" class="btn btn-outline-light btn-sm">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Game Container -->
+    <div class="game-container" id="gameContainer">
+        <!-- Mobile Orientation Notice -->
+        <div class="orientation-notice" id="orientationNotice" style="display: none;">
+            <div class="alert alert-warning">
+                <h5><i class="fas fa-mobile-alt"></i> Obróć Telefon</h5>
+                <p class="mb-2">Dla najlepszego doświadczenia gry, obróć telefon do pozycji pionowej.</p>
+                <i class="fas fa-mobile-alt fa-3x"></i>
+                <i class="fas fa-arrow-right fa-2x mx-3"></i>
+                <i class="fas fa-mobile-alt fa-3x" style="transform: rotate(90deg);"></i>
+            </div>
+        </div>
+
+        <!-- Controls Instructions -->
+        <div class="controls-instructions" id="controlsInstructions">
+            <div class="alert alert-info">
+                <h6 id="controlsTitle"><i class="fas fa-keyboard"></i> Desktop Controls</h6>
+                <p class="mb-0" id="controlsText">
+                    Strzałki / WASD - ruch, Spacja - strzał, ESC - pauza
+                </p>
+            </div>
+        </div>
+
+        <!-- Game Status -->
+        <div class="game-status">
+            <div class="row">
+                <div class="col-3">
+                    <div class="status-card">
+                        <i class="fas fa-rocket text-info"></i>
+                        <span id="shipHealth">100</span>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="status-card">
+                        <i class="fas fa-trophy text-warning"></i>
+                        <span id="currentScore">0</span>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="status-card">
+                        <i class="fas fa-bug text-danger"></i>
+                        <span id="virusesLeft">{{ game_config.total_viruses }}</span>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="status-card">
+                        <i class="fas fa-clock text-info"></i>
+                        <span id="timeLeft">{{ game_config.game_duration }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Canvas -->
+        <div class="game-canvas-container">
+            <canvas id="gameCanvas" width="800" height="600"></canvas>
+            
+            <!-- Game Overlay -->
+            <div class="game-overlay" id="gameOverlay">
+                <!-- Start Screen -->
+                <div class="overlay-screen" id="startScreen">
+                    <div class="screen-content">
+                        <i class="fas fa-rocket game-icon"></i>
+                        <h2>Space Defence</h2>
+                        <p>Zniszcz wszystkie wirusy kosmiczne!</p>
+                        <p class="difficulty-info">
+                            <i class="fas fa-chart-line"></i> 
+                            Poziom: {{ game_config.difficulty }} | 
+                            Wirusy: {{ game_config.total_viruses }} | 
+                            Czas: {{ game_config.game_duration }}s
+                        </p>
+                        <button class="btn btn-success btn-lg" onclick="startGame()">
+                            <i class="fas fa-play"></i> Rozpocznij Misję
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Countdown Screen -->
+                <div class="overlay-screen" id="countdownScreen" style="display: none;">
+                    <div class="screen-content">
+                        <h1 id="countdownNumber">3</h1>
+                        <p>Przygotuj działa...</p>
+                    </div>
+                </div>
+
+                <!-- Game Over Screen -->
+                <div class="overlay-screen" id="gameOverScreen" style="display: none;">
+                    <div class="screen-content">
+                        <i class="fas fa-trophy game-icon" id="gameIcon"></i>
+                        <h2 id="gameResultTitle">Misja Zakończona</h2>
+                        <div class="result-stats">
+                            <div class="stat-item">
+                                <i class="fas fa-trophy"></i>
+                                <span>Wynik: <strong id="finalScore">0</strong></span>
+                            </div>
+                            <div class="stat-item">
+                                <i class="fas fa-clock"></i>
+                                <span>Czas: <strong id="finalTime">0s</strong></span>
+                            </div>
+                            <div class="stat-item">
+                                <i class="fas fa-bug"></i>
+                                <span>Zniszczone: <strong id="virusesDestroyed">0</strong></span>
+                            </div>
+                            <div class="stat-item">
+                                <i class="fas fa-bullseye"></i>
+                                <span>Celność: <strong id="accuracy">0%</strong></span>
+                            </div>
+                        </div>
+                        <div class="game-actions">
+                            <button class="btn btn-success" onclick="restartGame()">
+                                <i class="fas fa-redo"></i> Nowa Misja
+                            </button>
+                            <a href="{{ url_for('minigames.leaderboard', game='space_defence') }}" class="btn btn-info">
+                                <i class="fas fa-list"></i> Ranking
+                            </a>
+                            <a href="{{ url_for('minigames.index') }}" class="btn btn-outline-light">
+                                <i class="fas fa-home"></i> Menu Główne
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pause Screen -->
+                <div class="overlay-screen" id="pauseScreen" style="display: none;">
+                    <div class="screen-content">
+                        <i class="fas fa-pause game-icon"></i>
+                        <h2>Misja Wstrzymana</h2>
+                        <div class="game-actions">
+                            <button class="btn btn-success" onclick="resumeGame()">
+                                <i class="fas fa-play"></i> Wznów Misję
+                            </button>
+                            <button class="btn btn-danger" onclick="endGame()">
+                                <i class="fas fa-stop"></i> Zakończ Misję
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Touch Controls -->
+        <div class="mobile-controls" id="mobileControls" style="display: none;">
+            <!-- Movement Joystick -->
+            <div class="joystick-container" id="movementJoystick">
+                <div class="joystick-outer">
+                    <div class="joystick-inner" id="joystickKnob"></div>
+                </div>
+                <div class="joystick-label">Ruch</div>
+            </div>
+
+            <!-- Fire Button -->
+            <div class="fire-button-container">
+                <button class="fire-button" id="fireButton">
+                    <i class="fas fa-bullseye"></i>
+                </button>
+                <div class="fire-label">Strzał</div>
+            </div>
+
+            <!-- Gyroscope Toggle -->
+            <div class="gyro-toggle" id="gyroToggle" style="display: none;">
+                <button class="btn btn-sm btn-outline-light" onclick="toggleGyroscope()">
+                    <i class="fas fa-mobile-alt"></i> <span id="gyroStatus">Włącz Żyroskop</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Game Configuration
+        const GAME_CONFIG = {
+            virus_rows: {{ game_config.virus_rows }},
+            virus_cols: {{ game_config.virus_cols }},
+            total_viruses: {{ game_config.total_viruses }},
+            game_duration: {{ game_config.game_duration }},
+            difficulty: {{ game_config.difficulty }},
+            points_per_virus: {{ game_config.points_per_virus }},
+            time_bonus_multiplier: {{ game_config.time_bonus_multiplier }}
+        };
+
+        // Game State
+        let gameState = {
+            isRunning: false,
+            isPaused: false,
+            startTime: null,
+            score: 0,
+            timeLeft: GAME_CONFIG.game_duration,
+            virusesDestroyed: 0,
+            shotsFired: 0,
+            sessionId: null
+        };
+
+        // Canvas and Context
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Device Detection
+        let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        let hasGyroscope = 'DeviceOrientationEvent' in window;
+        let gyroscopeEnabled = false;
+
+        // Player Ship
+        const ship = {
+            x: 0,
+            y: 0,
+            width: 40,
+            height: 30,
+            speed: isMobile ? 4 : 6,
+            health: 100,
+            color: '#00d2ff'
+        };
+
+        // Game Objects
+        let viruses = [];
+        let bullets = [];
+        let stars = [];
+
+        // Input Handling
+        const keys = {};
+        let joystickData = { x: 0, y: 0, active: false };
+        let gyroData = { alpha: 0, beta: 0, gamma: 0 };
+
+        // Initialize Game
+        function initGame() {
+            // Check orientation and device
+            checkOrientation();
+            
+            // Adjust canvas size for mobile
+            if (isMobile) {
+                adjustCanvasForMobile();
+                setupMobileControls();
+            } else {
+                canvas.width = 800;
+                canvas.height = 600;
+            }
+
+            // Initialize ship position
+            ship.x = canvas.width / 2 - ship.width / 2;
+            ship.y = canvas.height - ship.height - 20;
+
+            // Create background stars
+            createStars();
+
+            // Send device info
+            sendDeviceInfo();
+        }
+
+        // Check Device Orientation
+        function checkOrientation() {
+            if (isMobile) {
+                const orientation = screen.orientation || screen.mozOrientation || screen.msOrientation;
+                const isPortrait = window.innerHeight > window.innerWidth;
+                
+                if (!isPortrait) {
+                    document.getElementById('orientationNotice').style.display = 'block';
+                    document.getElementById('gameContainer').style.opacity = '0.3';
+                } else {
+                    document.getElementById('orientationNotice').style.display = 'none';
+                    document.getElementById('gameContainer').style.opacity = '1';
+                }
+            }
+        }
+
+        // Adjust Canvas for Mobile
+        function adjustCanvasForMobile() {
+            const container = document.querySelector('.game-canvas-container');
+            const containerWidth = container.clientWidth;
+            const containerHeight = container.clientHeight;
+            
+            canvas.width = Math.min(containerWidth - 20, 400);
+            canvas.height = Math.min(containerHeight - 150, 600);
+        }
+
+        // Setup Mobile Controls
+        function setupMobileControls() {
+            document.getElementById('mobileControls').style.display = 'flex';
+            
+            // Update controls instructions
+            document.getElementById('controlsTitle').innerHTML = '<i class="fas fa-mobile-alt"></i> Mobile Controls';
+            
+            if (hasGyroscope) {
+                document.getElementById('controlsText').textContent = 'Joystick - ruch, Przycisk - strzał, Żyroskop - dostępny';
+                document.getElementById('gyroToggle').style.display = 'block';
+            } else {
+                document.getElementById('controlsText').textContent = 'Joystick - ruch, Przycisk - strzał';
+            }
+
+            setupJoystick();
+            setupFireButton();
+            
+            if (hasGyroscope) {
+                setupGyroscope();
+            }
+        }
+
+        // Setup Joystick
+        function setupJoystick() {
+            const joystickOuter = document.querySelector('.joystick-outer');
+            const joystickKnob = document.getElementById('joystickKnob');
+            let isDragging = false;
+
+            function handleStart(e) {
+                isDragging = true;
+                joystickData.active = true;
+                e.preventDefault();
+            }
+
+            function handleMove(e) {
+                if (!isDragging) return;
+                
+                const rect = joystickOuter.getBoundingClientRect();
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                
+                const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+                const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+                
+                const x = clientX - rect.left - centerX;
+                const y = clientY - rect.top - centerY;
+                
+                const distance = Math.min(Math.sqrt(x*x + y*y), centerX - 10);
+                const angle = Math.atan2(y, x);
+                
+                const knobX = Math.cos(angle) * distance;
+                const knobY = Math.sin(angle) * distance;
+                
+                joystickKnob.style.transform = `translate(${knobX}px, ${knobY}px)`;
+                
+                // Normalize values
+                joystickData.x = knobX / (centerX - 10);
+                joystickData.y = knobY / (centerY - 10);
+                
+                e.preventDefault();
+            }
+
+            function handleEnd(e) {
+                isDragging = false;
+                joystickData.active = false;
+                joystickData.x = 0;
+                joystickData.y = 0;
+                joystickKnob.style.transform = 'translate(0, 0)';
+                e.preventDefault();
+            }
+
+            // Touch events
+            joystickOuter.addEventListener('touchstart', handleStart);
+            joystickOuter.addEventListener('touchmove', handleMove);
+            joystickOuter.addEventListener('touchend', handleEnd);
+
+            // Mouse events for testing
+            joystickOuter.addEventListener('mousedown', handleStart);
+            document.addEventListener('mousemove', handleMove);
+            document.addEventListener('mouseup', handleEnd);
+        }
+
+        // Setup Fire Button
+        function setupFireButton() {
+            const fireButton = document.getElementById('fireButton');
+            let isFiring = false;
+
+            function startFiring() {
+                isFiring = true;
+                fireButton.classList.add('active');
+                fire();
+            }
+
+            function stopFiring() {
+                isFiring = false;
+                fireButton.classList.remove('active');
+            }
+
+            function fire() {
+                if (!gameState.isRunning || gameState.isPaused) return;
+                
+                createBullet();
+                
+                if (isFiring) {
+                    setTimeout(fire, 200); // Fire rate
+                }
+            }
+
+            fireButton.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                startFiring();
+            });
+
+            fireButton.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                stopFiring();
+            });
+
+            fireButton.addEventListener('mousedown', startFiring);
+            fireButton.addEventListener('mouseup', stopFiring);
+        }
+
+        // Setup Gyroscope
+        function setupGyroscope() {
+            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                // iOS 13+ requires permission
+                document.getElementById('gyroStatus').textContent = 'Żądaj Pozwolenia';
+            }
+        }
+
+        // Toggle Gyroscope
+        async function toggleGyroscope() {
+            if (!hasGyroscope) return;
+
+            if (!gyroscopeEnabled) {
+                // Request permission on iOS
+                if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                    const permission = await DeviceOrientationEvent.requestPermission();
+                    if (permission !== 'granted') {
+                        alert('Pozwolenie na żyroskop zostało odrzucone');
+                        return;
+                    }
+                }
+
+                // Enable gyroscope
+                window.addEventListener('deviceorientation', handleOrientation);
+                gyroscopeEnabled = true;
+                document.getElementById('gyroStatus').textContent = 'Wyłącz Żyroskop';
+                
+                // Hide joystick when gyroscope is active
+                document.getElementById('movementJoystick').style.opacity = '0.3';
+            } else {
+                // Disable gyroscope
+                window.removeEventListener('deviceorientation', handleOrientation);
+                gyroscopeEnabled = false;
+                document.getElementById('gyroStatus').textContent = 'Włącz Żyroskop';
+                document.getElementById('movementJoystick').style.opacity = '1';
+            }
+        }
+
+        // Handle Device Orientation
+        function handleOrientation(event) {
+            if (!gyroscopeEnabled || !gameState.isRunning) return;
+
+            // Use gamma (left-right tilt) for horizontal movement
+            const gamma = event.gamma; // -90 to 90 degrees
+            
+            if (gamma !== null) {
+                // Normalize gamma to -1 to 1
+                const normalizedGamma = Math.max(-1, Math.min(1, gamma / 30));
+                gyroData.gamma = normalizedGamma;
+            }
+        }
+
+        // Send Device Info
+        function sendDeviceInfo() {
+            fetch('/minigames/api/device-info', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    is_mobile: isMobile,
+                    has_gyroscope: hasGyroscope,
+                    screen_width: screen.width,
+                    screen_height: screen.height
+                })
+            });
+        }
+
+        // Create Background Stars
+        function createStars() {
+            stars = [];
+            for (let i = 0; i < 50; i++) {
+                stars.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 2 + 1,
+                    speed: Math.random() * 2 + 0.5,
+                    brightness: Math.random()
+                });
+            }
+        }
+
+        // Create Viruses
+        function createViruses() {
+            viruses = [];
+            const virusWidth = 40;
+            const virusHeight = 30;
+            const spacing = 10;
+            const startX = (canvas.width - (GAME_CONFIG.virus_cols * (virusWidth + spacing) - spacing)) / 2;
+            const startY = 50;
+
+            for (let row = 0; row < GAME_CONFIG.virus_rows; row++) {
+                for (let col = 0; col < GAME_CONFIG.virus_cols; col++) {
+                    viruses.push({
+                        x: startX + col * (virusWidth + spacing),
+                        y: startY + row * (virusHeight + spacing),
+                        width: virusWidth,
+                        height: virusHeight,
+                        color: `hsl(${120 + row * 30}, 70%, 50%)`,
+                        health: 1 + Math.floor(row / 2), // Lower rows have more health
+                        maxHealth: 1 + Math.floor(row / 2),
+                        moveDirection: 1,
+                        animation: Math.random() * Math.PI * 2
+                    });
+                }
+            }
+        }
+
+        // Create Bullet
+        function createBullet() {
+            gameState.shotsFired++;
+            bullets.push({
+                x: ship.x + ship.width / 2 - 2,
+                y: ship.y,
+                width: 4,
+                height: 10,
+                speed: 8,
+                color: '#ffff00'
+            });
+        }
+
+        // Start Game
+        async function startGame() {
+            try {
+                const response = await fetch('/minigames/api/start-game', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        game_type: 'space_defence',
+                        difficulty: GAME_CONFIG.difficulty
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    gameState.sessionId = data.session_id;
+                    showCountdown();
+                } else {
+                    alert('Błąd podczas rozpoczynania gry: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error starting game:', error);
+                alert('Błąd połączenia z serwerem');
+            }
+        }
+
+        // Show Countdown
+        function showCountdown() {
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('countdownScreen').style.display = 'flex';
+
+            let count = 3;
+            const countdownElement = document.getElementById('countdownNumber');
+
+            const countdownInterval = setInterval(() => {
+                countdownElement.textContent = count;
+                count--;
+
+                if (count < 0) {
+                    clearInterval(countdownInterval);
+                    document.getElementById('countdownScreen').style.display = 'none';
+                    beginGame();
+                }
+            }, 1000);
+        }
+
+        // Begin Game
+        function beginGame() {
+            gameState.isRunning = true;
+            gameState.startTime = Date.now();
+            gameState.score = 0;
+            gameState.timeLeft = GAME_CONFIG.game_duration;
+            gameState.virusesDestroyed = 0;
+            gameState.shotsFired = 0;
+            ship.health = 100;
+
+            // Reset ship position
+            ship.x = canvas.width / 2 - ship.width / 2;
+            ship.y = canvas.height - ship.height - 20;
+
+            // Create viruses
+            createViruses();
+
+            // Start game loop
+            gameLoop();
+            
+            // Start timer
+            startTimer();
+        }
+
+        // Game Loop
+        function gameLoop() {
+            if (!gameState.isRunning || gameState.isPaused) return;
+
+            // Clear canvas
+            ctx.fillStyle = '#000011';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Update and draw stars
+            updateStars();
+            drawStars();
+
+            // Update and draw game objects
+            updateShip();
+            updateBullets();
+            updateViruses();
+
+            drawShip();
+            drawBullets();
+            drawViruses();
+
+            // Check collisions
+            checkCollisions();
+
+            // Update score
+            updateScore();
+
+            // Check win/lose conditions
+            checkGameEnd();
+
+            // Continue game loop
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Update Stars
+        function updateStars() {
+            stars.forEach(star => {
+                star.y += star.speed;
+                if (star.y > canvas.height) {
+                    star.y = -star.size;
+                    star.x = Math.random() * canvas.width;
+                }
+                star.brightness = 0.3 + 0.7 * Math.sin(Date.now() * 0.001 + star.x);
+            });
+        }
+
+        // Draw Stars
+        function drawStars() {
+            stars.forEach(star => {
+                ctx.fillStyle = `rgba(255, 255, 255, ${star.brightness})`;
+                ctx.fillRect(star.x, star.y, star.size, star.size);
+            });
+        }
+
+        // Update Ship
+        function updateShip() {
+            if (isMobile) {
+                if (gyroscopeEnabled && gyroData.gamma !== undefined) {
+                    // Use gyroscope for movement
+                    ship.x += gyroData.gamma * ship.speed * 1.5;
+                } else if (joystickData.active) {
+                    // Use joystick for movement
+                    ship.x += joystickData.x * ship.speed;
+                }
+            } else {
+                // Desktop keyboard controls
+                if (keys['a'] || keys['A'] || keys['ArrowLeft']) {
+                    ship.x -= ship.speed;
+                }
+                if (keys['d'] || keys['D'] || keys['ArrowRight']) {
+                    ship.x += ship.speed;
+                }
+            }
+
+            // Keep ship in bounds
+            ship.x = Math.max(0, Math.min(canvas.width - ship.width, ship.x));
+        }
+
+        // Update Bullets
+        function updateBullets() {
+            bullets.forEach((bullet, index) => {
+                bullet.y -= bullet.speed;
+                
+                if (bullet.y < -bullet.height) {
+                    bullets.splice(index, 1);
+                }
+            });
+        }
+
+        // Update Viruses
+        function updateViruses() {
+            if (viruses.length === 0) return;
+
+            // Simple side-to-side movement
+            let shouldMoveDown = false;
+            
+            viruses.forEach(virus => {
+                virus.x += virus.moveDirection * 1;
+                virus.animation += 0.1;
+                
+                if (virus.x <= 0 || virus.x >= canvas.width - virus.width) {
+                    shouldMoveDown = true;
+                }
+            });
+
+            if (shouldMoveDown) {
+                viruses.forEach(virus => {
+                    virus.moveDirection *= -1;
+                    virus.y += 20;
+                });
+            }
+        }
+
+        // Draw Ship
+        function drawShip() {
+            ctx.fillStyle = ship.color;
+            
+            // Draw spaceship shape
+            const centerX = ship.x + ship.width / 2;
+            const centerY = ship.y + ship.height / 2;
+            
+            ctx.beginPath();
+            ctx.moveTo(centerX, ship.y); // Top point
+            ctx.lineTo(ship.x, ship.y + ship.height); // Bottom left
+            ctx.lineTo(ship.x + ship.width * 0.3, ship.y + ship.height * 0.8); // Inner left
+            ctx.lineTo(ship.x + ship.width * 0.7, ship.y + ship.height * 0.8); // Inner right
+            ctx.lineTo(ship.x + ship.width, ship.y + ship.height); // Bottom right
+            ctx.closePath();
+            ctx.fill();
+
+            // Draw ship glow
+            ctx.shadowColor = ship.color;
+            ctx.shadowBlur = 10;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+
+        // Draw Bullets
+        function drawBullets() {
+            bullets.forEach(bullet => {
+                ctx.fillStyle = bullet.color;
+                ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+                
+                // Bullet glow
+                ctx.shadowColor = bullet.color;
+                ctx.shadowBlur = 5;
+                ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+                ctx.shadowBlur = 0;
+            });
+        }
+
+        // Draw Viruses
+        function drawViruses() {
+            viruses.forEach(virus => {
+                // Virus body
+                ctx.fillStyle = virus.color;
+                
+                // Animate virus (pulsing effect)
+                const scale = 1 + Math.sin(virus.animation) * 0.1;
+                const width = virus.width * scale;
+                const height = virus.height * scale;
+                const x = virus.x + (virus.width - width) / 2;
+                const y = virus.y + (virus.height - height) / 2;
+                
+                // Draw virus shape
+                ctx.beginPath();
+                ctx.ellipse(x + width/2, y + height/2, width/2, height/2, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Draw virus spikes
+                ctx.strokeStyle = virus.color;
+                ctx.lineWidth = 2;
+                for (let i = 0; i < 6; i++) {
+                    const angle = (i / 6) * Math.PI * 2 + virus.animation;
+                    const spikeLength = 8;
+                    const startX = x + width/2 + Math.cos(angle) * width/2;
+                    const startY = y + height/2 + Math.sin(angle) * height/2;
+                    const endX = startX + Math.cos(angle) * spikeLength;
+                    const endY = startY + Math.sin(angle) * spikeLength;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(startX, startY);
+                    ctx.lineTo(endX, endY);
+                    ctx.stroke();
+                }
+
+                // Health bar
+                if (virus.health < virus.maxHealth) {
+                    const barWidth = virus.width;
+                    const barHeight = 4;
+                    const healthPercent = virus.health / virus.maxHealth;
+                    
+                    ctx.fillStyle = 'red';
+                    ctx.fillRect(virus.x, virus.y - 8, barWidth, barHeight);
+                    ctx.fillStyle = 'green';
+                    ctx.fillRect(virus.x, virus.y - 8, barWidth * healthPercent, barHeight);
+                }
+            });
+        }
+
+        // Check Collisions
+        function checkCollisions() {
+            // Bullet-Virus collisions
+            bullets.forEach((bullet, bulletIndex) => {
+                viruses.forEach((virus, virusIndex) => {
+                    if (bullet.x < virus.x + virus.width &&
+                        bullet.x + bullet.width > virus.x &&
+                        bullet.y < virus.y + virus.height &&
+                        bullet.y + bullet.height > virus.y) {
+                        
+                        // Hit virus
+                        virus.health--;
+                        bullets.splice(bulletIndex, 1);
+                        
+                        // Destroy virus if health is 0
+                        if (virus.health <= 0) {
+                            viruses.splice(virusIndex, 1);
+                            gameState.virusesDestroyed++;
+                            document.getElementById('virusesLeft').textContent = 
+                                GAME_CONFIG.total_viruses - gameState.virusesDestroyed;
+                        }
+                        
+                        // Visual effect
+                        createExplosion(virus.x + virus.width/2, virus.y + virus.height/2);
+                    }
+                });
+            });
+        }
+
+        // Create Explosion Effect
+        function createExplosion(x, y) {
+            // Simple flash effect
+            ctx.fillStyle = 'rgba(255, 255, 0, 0.8)';
+            ctx.beginPath();
+            ctx.arc(x, y, 20, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Update Score
+        function updateScore() {
+            if (gameState.isRunning) {
+                const baseScore = gameState.virusesDestroyed * GAME_CONFIG.points_per_virus;
+                const timeBonus = gameState.timeLeft * GAME_CONFIG.time_bonus_multiplier;
+                gameState.score = baseScore + timeBonus;
+                
+                document.getElementById('currentScore').textContent = gameState.score;
+                document.getElementById('gameScore').textContent = `Score: ${gameState.score}`;
+            }
+        }
+
+        // Check Game End
+        function checkGameEnd() {
+            if (viruses.length === 0) {
+                // All viruses destroyed - WIN
+                endGame();
+            } else if (gameState.timeLeft <= 0) {
+                // Time's up - LOSE
+                endGame();
+            } else {
+                // Check if viruses reached the bottom
+                const bottomReached = viruses.some(virus => virus.y + virus.height >= canvas.height - 50);
+                if (bottomReached) {
+                    // Viruses reached ship - LOSE
+                    endGame();
+                }
+            }
+        }
+
+        // Start Timer
+        function startTimer() {
+            const timerInterval = setInterval(() => {
+                if (!gameState.isRunning || gameState.isPaused) return;
+                
+                gameState.timeLeft--;
+                document.getElementById('timeLeft').textContent = gameState.timeLeft;
+                document.getElementById('gameTime').textContent = `Time: ${gameState.timeLeft}`;
+                
+                if (gameState.timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                }
+            }, 1000);
+        }
+
+        // End Game
+        async function endGame() {
+            gameState.isRunning = false;
+            
+            // Calculate final score
+            const baseScore = gameState.virusesDestroyed * GAME_CONFIG.points_per_virus;
+            const timeBonus = gameState.timeLeft * GAME_CONFIG.time_bonus_multiplier;
+            const completionBonus = (viruses.length === 0) ? 200 * GAME_CONFIG.difficulty : 0;
+            const finalScore = baseScore + timeBonus + completionBonus;
+            
+            gameState.score = finalScore;
+            
+            // Calculate accuracy
+            const accuracy = gameState.shotsFired > 0 ? 
+                Math.round((gameState.virusesDestroyed / gameState.shotsFired) * 100) : 0;
+            
+            // Update final stats
+            document.getElementById('finalScore').textContent = finalScore;
+            document.getElementById('finalTime').textContent = (GAME_CONFIG.game_duration - gameState.timeLeft) + 's';
+            document.getElementById('virusesDestroyed').textContent = gameState.virusesDestroyed;
+            document.getElementById('accuracy').textContent = accuracy + '%';
+            
+            // Determine result
+            const gameIcon = document.getElementById('gameIcon');
+            const gameTitle = document.getElementById('gameResultTitle');
+            
+            if (viruses.length === 0) {
+                gameIcon.className = 'fas fa-trophy game-icon text-warning';
+                gameTitle.textContent = 'Misja Zakończona Sukcesem!';
+            } else if (gameState.timeLeft <= 0) {
+                gameIcon.className = 'fas fa-clock game-icon text-danger';
+                gameTitle.textContent = 'Czas Minął!';
+            } else {
+                gameIcon.className = 'fas fa-skull game-icon text-danger';
+                gameTitle.textContent = 'Wirusy Dotarły do Ziemi!';
+            }
+            
+            // Send results to server
+            try {
+                const response = await fetch('/minigames/api/finish-game', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        session_id: gameState.sessionId,
+                        score: finalScore,
+                        game_data: {
+                            viruses_destroyed: gameState.virusesDestroyed,
+                            shots_fired: gameState.shotsFired,
+                            accuracy: accuracy,
+                            difficulty: GAME_CONFIG.difficulty,
+                            time_remaining: gameState.timeLeft,
+                            completed: viruses.length === 0
+                        }
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success && data.rank) {
+                    const rankInfo = document.createElement('div');
+                    rankInfo.className = 'stat-item';
+                    rankInfo.innerHTML = `<i class="fas fa-medal"></i><span>Pozycja: <strong>#${data.rank}</strong></span>`;
+                    document.querySelector('.result-stats').appendChild(rankInfo);
+                }
+            } catch (error) {
+                console.error('Error finishing game:', error);
+            }
+            
+            // Show game over screen
+            document.getElementById('gameOverScreen').style.display = 'flex';
+        }
+
+        // Restart Game
+        function restartGame() {
+            document.getElementById('gameOverScreen').style.display = 'none';
+            document.getElementById('startScreen').style.display = 'flex';
+            
+            // Reset game state
+            gameState = {
+                isRunning: false,
+                isPaused: false,
+                startTime: null,
+                score: 0,
+                timeLeft: GAME_CONFIG.game_duration,
+                virusesDestroyed: 0,
+                shotsFired: 0,
+                sessionId: null
+            };
+            
+            // Reset UI
+            document.getElementById('currentScore').textContent = '0';
+            document.getElementById('gameScore').textContent = 'Score: 0';
+            document.getElementById('timeLeft').textContent = GAME_CONFIG.game_duration;
+            document.getElementById('gameTime').textContent = `Time: ${GAME_CONFIG.game_duration}`;
+            document.getElementById('virusesLeft').textContent = GAME_CONFIG.total_viruses;
+            document.getElementById('shipHealth').textContent = '100';
+            
+            // Reset ship
+            ship.x = canvas.width / 2 - ship.width / 2;
+            ship.y = canvas.height - ship.height - 20;
+            ship.health = 100;
+            
+            // Clear game objects
+            bullets = [];
+            viruses = [];
+            
+            // Clear canvas
+            ctx.fillStyle = '#000011';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // Pause Game
+        function pauseGame() {
+            if (gameState.isRunning && !gameState.isPaused) {
+                gameState.isPaused = true;
+                document.getElementById('pauseScreen').style.display = 'flex';
+            }
+        }
+
+        // Resume Game
+        function resumeGame() {
+            if (gameState.isPaused) {
+                gameState.isPaused = false;
+                document.getElementById('pauseScreen').style.display = 'none';
+                gameLoop();
+            }
+        }
+
+        // Event Listeners
+        window.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+            
+            // Fire bullets with spacebar
+            if (e.key === ' ' && gameState.isRunning && !gameState.isPaused) {
+                createBullet();
+                e.preventDefault();
+            }
+            
+            // Pause with Escape
+            if (e.key === 'Escape') {
+                pauseGame();
+            }
+            
+            // Prevent default for game keys
+            if (['w', 'a', 's', 'd', 'W', 'A', 'S', 'D', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
+                e.preventDefault();
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+
+        // Orientation change
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                checkOrientation();
+                if (isMobile) {
+                    adjustCanvasForMobile();
+                }
+            }, 100);
+        });
+
+        window.addEventListener('resize', () => {
+            checkOrientation();
+            if (isMobile) {
+                adjustCanvasForMobile();
+            }
+        });
+
+        // Prevent context menu
+        canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+        // Visibility change (pause when tab is hidden)
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && gameState.isRunning) {
+                pauseGame();
+            }
+        });
+
+        // Initialize when page loads
+        window.addEventListener('load', initGame);
+    </script>
+</body>
+</html>

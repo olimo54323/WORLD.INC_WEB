@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>📶 World.Inc - WiFi Guard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body class="game-body">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="{{ url_for('home') }}">
+                <i class="fas fa-globe-americas text-info"></i> WORLD.INC
+            </a>
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text me-3">
+                    <i class="fas fa-wifi text-warning"></i> WiFi Guard
+                </span>
+                <span class="navbar-text me-3" id="gameScore">Score: 0</span>
+                <span class="navbar-text me-3" id="attemptsLeft">Attempts: {{ game_config.max_attempts }}</span>
+                <a href="{{ url_for('minigames.index') }}" class="btn btn-outline-light btn-sm">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Game Container -->
+    <div class="game-container" id="gameContainer">
+        <!-- Game Status -->
+        <div class="game-status">
+            <div class="row">
+                <div class="col-3">
+                    <div class="status-card">
+                        <i class="fas fa-shield-alt text-success"></i>
+                        <span id="networkStatus">SECURE</span>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="status-card">
+                        <i class="fas fa-trophy text-warning"></i>
+                        <span id="currentScore">0</span>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="status-card">
+                        <i class="fas fa-exclamation-triangle text-danger"></i>
+                        <span id="attemptsRemaining">{{ game_config.max_attempts }}</span>
+                    </div>
+                </div>
+                <div class="col-3">
+                    <div class="status-card">
+                        <i class="fas fa-clock text-info"></i>
+                        <span id="timeLeft">{{ game_config.time_limit }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Area -->
+        <div class="wifi-game-area">
+            <!-- WiFi Router Animation -->
+            <div class="router-container">
+                <div class="router-device">
+                    <i class="fas fa-wifi wifi-icon" id="wifiIcon"></i>
+                    <div class="signal-waves">
+                        <div class="wave wave-1"></div>
+                        <div class="wave wave-2"></div>
+                        <div class="wave wave-3"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Password Display -->
+            <div class="password-section">
+                <div class="alert alert-warning">
+                    <h5><i class="fas fa-key"></i> Password Required</h5>
+                    <p class="mb-2">Enter the exact password to secure the network:</p>
+                    <div class="password-display" id="passwordDisplay">
+                        {{ game_config.password }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Section -->
+            <div class="input-section">
+                <div class="card bg-secondary">
+                    <div class="card-header">
+                        <h6><i class="fas fa-keyboard"></i> Network Authentication</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="passwordInput" class="form-label">
+                                <i class="fas fa-lock"></i> Enter Password:
+                            </label>
+                            <input 
+                                type="text" 
+                                class="form-control form-control-lg" 
+                                id="passwordInput" 
+                                placeholder="Type the password here..."
+                                autocomplete="off"
+                                spellcheck="false"
+                            >
+                            <div class="form-text">
+                                <span id="inputFeedback">Type carefully - you have limited attempts!</span>
+                            </div>
+                        </div>
+                        
+                        <div class="input-actions">
+                            <button class="btn btn-success btn-lg" onclick="checkPassword()" id="submitBtn">
+                                <i class="fas fa-check"></i> Submit Password
+                            </button>
+                            <button class="btn btn-outline-light" onclick="clearInput()" id="clearBtn">
+                                <i class="fas fa-eraser"></i> Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile Virtual Keyboard -->
+            <div class="virtual-keyboard" id="virtualKeyboard" style="display: none;">
+                <div class="keyboard-row">
+                    <button class="key" onclick="typeKey('1')">1</button>
+                    <button class="key" onclick="typeKey('2')">2</button>
+                    <button class="key" onclick="typeKey('3')">3</button>
+                    <button class="key" onclick="typeKey('4')">4</button>
+                    <button class="key" onclick="typeKey('5')">5</button>
+                    <button class="key" onclick="typeKey('6')">6</button>
+                    <button class="key" onclick="typeKey('7')">7</button>
+                    <button class="key" onclick="typeKey('8')">8</button>
+                    <button class="key" onclick="typeKey('9')">9</button>
+                    <button class="key" onclick="typeKey('0')">0</button>
+                </div>
+                <div class="keyboard-row">
+                    <button class="key" onclick="typeKey('Q')">Q</button>
+                    <button class="key" onclick="typeKey('W')">W</button>
+                    <button class="key" onclick="typeKey('E')">E</button>
+                    <button class="key" onclick="typeKey('R')">R</button>
+                    <button class="key" onclick="typeKey('T')">T</button>
+                    <button class="key" onclick="typeKey('Y')">Y</button>
+                    <button class="key" onclick="typeKey('U')">U</button>
+                    <button class="key" onclick="typeKey('I')">I</button>
+                    <button class="key" onclick="typeKey('O')">O</button>
+                    <button class="key" onclick="typeKey('P')">P</button>
+                </div>
+                <div class="keyboard-row">
+                    <button class="key" onclick="typeKey('A')">A</button>
+                    <button class="key" onclick="typeKey('S')">S</button>
+                    <button class="key" onclick="typeKey('D')">D</button>
+                    <button class="key" onclick="typeKey('F')">F</button>
+                    <button class="key" onclick="typeKey('G')">G</button>
+                    <button class="key" onclick="typeKey('H')">H</button>
+                    <button class="key" onclick="typeKey('J')">J</button>
+                    <button class="key" onclick="typeKey('K')">K</button>
+                    <button class="key" onclick="typeKey('L')">L</button>
+                </div>
+                <div class="keyboard-row">
+                    <button class="key key-special" onclick="toggleCase()">
+                        <i class="fas fa-arrow-up" id="caseIcon"></i>
+                    </button>
+                    <button class="key" onclick="typeKey('Z')">Z</button>
+                    <button class="key" onclick="typeKey('X')">X</button>
+                    <button class="key" onclick="typeKey('C')">C</button>
+                    <button class="key" onclick="typeKey('V')">V</button>
+                    <button class="key" onclick="typeKey('B')">B</button>
+                    <button class="key" onclick="typeKey('N')">N</button>
+                    <button class="key" onclick="typeKey('M')">M</button>
+                    <button class="key key-special" onclick="backspace()">
+                        <i class="fas fa-backspace"></i>
+                    </button>
+                </div>
+                <div class="keyboard-row">
+                    <button class="key key-submit" onclick="checkPassword()">
+                        <i class="fas fa-check"></i> Submit
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Overlay -->
+        <div class="game-overlay" id="gameOverlay">
+            <!-- Start Screen -->
+            <div class="overlay-screen" id="startScreen">
+                <div class="screen-content">
+                    <i class="fas fa-wifi game-icon"></i>
+                    <h2>WiFi Guard</h2>
+                    <p>Secure the network by entering the correct password!</p>
+                    <p class="difficulty-info">
+                        <i class="fas fa-chart-line"></i> 
+                        Level: {{ game_config.difficulty }} | 
+                        Time: {{ game_config.time_limit }}s | 
+                        Attempts: {{ game_config.max_attempts }}
+                    </p>
+                    <button class="btn btn-success btn-lg" onclick="startGame()">
+                        <i class="fas fa-play"></i> Start Security Protocol
+                    </button>
+                </div>
+            </div>
+
+            <!-- Game Over Screen -->
+            <div class="overlay-screen" id="gameOverScreen" style="display: none;">
+                <div class="screen-content">
+                    <i class="fas fa-trophy game-icon" id="gameIcon"></i>
+                    <h2 id="gameResultTitle">Security Protocol Complete</h2>
+                    <div class="result-stats">
+                        <div class="stat-item">
+                            <i class="fas fa-trophy"></i>
+                            <span>Score: <strong id="finalScore">0</strong></span>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-clock"></i>
+                            <span>Time: <strong id="finalTime">0s</strong></span>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span>Attempts Used: <strong id="attemptsUsed">0</strong></span>
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>Status: <strong id="securityStatus">Unknown</strong></span>
+                        </div>
+                    </div>
+                    <div class="game-actions">
+                        <button class="btn btn-success" onclick="restartGame()">
+                            <i class="fas fa-redo"></i> New Security Test
+                        </button>
+                        <a href="{{ url_for('minigames.leaderboard', game='wifi_guard') }}" class="btn btn-info">
+                            <i class="fas fa-list"></i> Ranking
+                        </a>
+                        <a href="{{ url_for('minigames.index') }}" class="btn btn-outline-light">
+                            <i class="fas fa-home"></i> Main Menu
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Game Configuration
+        const GAME_CONFIG = {
+            password: "{{ game_config.password }}",
+            password_length: {{ game_config.password_length }},
+            time_limit: {{ game_config.time_limit }},
+            max_attempts: {{ game_config.max_attempts }},
+            difficulty: {{ game_config.difficulty }}
+        };
+
+        // Game State
+        let gameState = {
+            isRunning: false,
+            startTime: null,
+            score: 0,
+            timeLeft: GAME_CONFIG.time_limit,
+            attemptsLeft: GAME_CONFIG.max_attempts,
+            completed: false,
+            sessionId: null
+        };
+
+        // Device Detection
+        let isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        let isUpperCase = true;
+
+        // Initialize Game
+        function initGame() {
+            if (isMobile) {
+                // Show virtual keyboard for mobile
+                document.getElementById('virtualKeyboard').style.display = 'block';
+                // Hide system keyboard
+                document.getElementById('passwordInput').setAttribute('readonly', 'readonly');
+            }
+            
+            // Focus input
+            if (!isMobile) {
+                document.getElementById('passwordInput').focus();
+            }
+            
+            sendDeviceInfo();
+        }
+
+        // Send Device Info
+        function sendDeviceInfo() {
+            fetch('/minigames/api/device-info', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    is_mobile: isMobile,
+                    has_gyroscope: false, // Not needed for this game
+                    screen_width: screen.width,
+                    screen_height: screen.height
+                })
+            });
+        }
+
+        // Start Game
+        async function startGame() {
+            try {
+                const response = await fetch('/minigames/api/start-game', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        game_type: 'wifi_guard',
+                        difficulty: GAME_CONFIG.difficulty
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    gameState.sessionId = data.session_id;
+                    beginGame();
+                } else {
+                    alert('Error starting game: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Error starting game:', error);
+                alert('Connection error');
+            }
+        }
+
+        // Begin Game
+        function beginGame() {
+            gameState.isRunning = true;
+            gameState.startTime = Date.now();
+            gameState.score = 0;
+            gameState.timeLeft = GAME_CONFIG.time_limit;
+            gameState.attemptsLeft = GAME_CONFIG.max_attempts;
+            gameState.completed = false;
+
+            // Hide start screen
+            document.getElementById('startScreen').style.display = 'none';
+
+            // Start timer
+            startTimer();
+
+            // Enable input
+            document.getElementById('passwordInput').disabled = false;
+            document.getElementById('submitBtn').disabled = false;
+
+            // Focus input (desktop only)
+            if (!isMobile) {
+                document.getElementById('passwordInput').focus();
+            }
+
+            // Start network animation
+            startNetworkAnimation();
+        }
+
+        // Start Timer
+        function startTimer() {
+            const timerInterval = setInterval(() => {
+                if (!gameState.isRunning) return;
+                
+                gameState.timeLeft--;
+                document.getElementById('timeLeft').textContent = gameState.timeLeft;
+                
+                // Update UI based on time left
+                if (gameState.timeLeft <= 10) {
+                    document.getElementById('timeLeft').style.color = '#ff4757';
+                    // Flash warning
+                    if (gameState.timeLeft % 2 === 0) {
+                        document.querySelector('.status-card .fas.fa-clock').style.color = '#ff4757';
+                    } else {
+                        document.querySelector('.status-card .fas.fa-clock').style.color = '#17a2b8';
+                    }
+                }
+                
+                if (gameState.timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    endGame(false, 'Time limit exceeded!');
+                }
+            }, 1000);
+        }
+
+        // Start Network Animation
+        function startNetworkAnimation() {
+            const wifiIcon = document.getElementById('wifiIcon');
+            const waves = document.querySelectorAll('.wave');
+            
+            // Animate WiFi waves
+            waves.forEach((wave, index) => {
+                wave.style.animationDelay = `${index * 0.3}s`;
+                wave.classList.add('active');
+            });
+
+            // Change WiFi icon color based on security status
+            wifiIcon.style.color = '#ffa502'; // Warning color during game
+            document.getElementById('networkStatus').textContent = 'VULNERABLE';
+            document.getElementById('networkStatus').style.color = '#ff4757';
+        }
+
+        // Virtual Keyboard Functions
+        function typeKey(key) {
+            if (!gameState.isRunning) return;
+            
+            const input = document.getElementById('passwordInput');
+            if (isUpperCase) {
+                input.value += key.toUpperCase();
+            } else {
+                input.value += key.toLowerCase();
+            }
+            
+            // Visual feedback
+            playKeySound();
+            highlightKey(key);
+        }
+
+        function toggleCase() {
+            isUpperCase = !isUpperCase;
+            const caseIcon = document.getElementById('caseIcon');
+            
+            if (isUpperCase) {
+                caseIcon.className = 'fas fa-arrow-up';
+                caseIcon.parentElement.classList.add('active');
+            } else {
+                caseIcon.className = 'fas fa-arrow-down';
+                caseIcon.parentElement.classList.remove('active');
+            }
+            
+            // Update all letter keys
+            document.querySelectorAll('.key').forEach(key => {
+                const text = key.textContent;
+                if (text.length === 1 && /[A-Za-z]/.test(text)) {
+                    key.textContent = isUpperCase ? text.toUpperCase() : text.toLowerCase();
+                }
+            });
+        }
+
+        function backspace() {
+            if (!gameState.isRunning) return;
+            
+            const input = document.getElementById('passwordInput');
+            input.value = input.value.slice(0, -1);
+            playKeySound();
+        }
+
+        function clearInput() {
+            if (!gameState.isRunning) return;
+            
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('inputFeedback').textContent = 'Input cleared. Type carefully!';
+            document.getElementById('inputFeedback').style.color = '#6c757d';
+        }
+
+        // Play Key Sound (visual feedback)
+        function playKeySound() {
+            // Visual feedback instead of actual sound
+            document.body.style.backgroundColor = '#1a1a2e';
+            setTimeout(() => {
+                document.body.style.backgroundColor = '';
+            }, 50);
+        }
+
+        // Highlight Key
+        function highlightKey(key) {
+            const keyElements = document.querySelectorAll('.key');
+            keyElements.forEach(keyEl => {
+                if (keyEl.textContent === key.toUpperCase() || keyEl.textContent === key.toLowerCase()) {
+                    keyEl.classList.add('pressed');
+                    setTimeout(() => {
+                        keyEl.classList.remove('pressed');
+                    }, 150);
+                }
+            });
+        }
+
+        // Check Password
+        function checkPassword() {
+            if (!gameState.isRunning) return;
+            
+            const inputPassword = document.getElementById('passwordInput').value;
+            const correctPassword = GAME_CONFIG.password;
+            
+            gameState.attemptsLeft--;
+            document.getElementById('attemptsRemaining').textContent = gameState.attemptsLeft;
+            document.getElementById('attemptsLeft').textContent = `Attempts: ${gameState.attemptsLeft}`;
+            
+            if (inputPassword === correctPassword) {
+                // Correct password!
+                endGame(true, 'Network secured successfully!');
+            } else {
+                // Wrong password
+                if (gameState.attemptsLeft > 0) {
+                    showWrongPasswordFeedback(inputPassword, correctPassword);
+                } else {
+                    endGame(false, 'Maximum attempts exceeded!');
+                }
+            }
+        }
+
+        // Show Wrong Password Feedback
+        function showWrongPasswordFeedback(input, correct) {
+            const feedback = document.getElementById('inputFeedback');
+            
+            // Show character-by-character comparison
+            let comparison = '';
+            const maxLength = Math.max(input.length, correct.length);
+            
+            for (let i = 0; i < maxLength; i++) {
+                const inputChar = input[i] || '_';
+                const correctChar = correct[i] || '_';
+                
+                if (inputChar === correctChar) {
+                    comparison += `<span style="color: #28a745;">${inputChar}</span>`;
+                } else {
+                    comparison += `<span style="color: #dc3545;">${inputChar}</span>`;
+                }
+            }
+            
+            feedback.innerHTML = `Wrong! Try again: ${comparison}`;
+            feedback.style.color = '#dc3545';
+            
+            // Clear input
+            document.getElementById('passwordInput').value = '';
+            
+            // Shake animation
+            const inputSection = document.querySelector('.input-section');
+            inputSection.classList.add('shake');
+            setTimeout(() => {
+                inputSection.classList.remove('shake');
+            }, 500);
+            
+            // Update network status
+            const waves = document.querySelectorAll('.wave');
+            waves.forEach(wave => {
+                wave.style.backgroundColor = '#ff4757';
+            });
+            
+            setTimeout(() => {
+                waves.forEach(wave => {
+                    wave.style.backgroundColor = '#ffa502';
+                });
+            }, 1000);
+        }
+
+        // End Game
+        async function endGame(success, message) {
+            gameState.isRunning = false;
+            gameState.completed = success;
+            
+            // Calculate final score
+            const timeTaken = GAME_CONFIG.time_limit - gameState.timeLeft;
+            const attemptsUsed = GAME_CONFIG.max_attempts - gameState.attemptsLeft;
+            
+            let finalScore = 0;
+            if (success) {
+                const baseScore = 200;
+                const timeBonus = Math.max(0, gameState.timeLeft * 10);
+                const attemptBonus = (GAME_CONFIG.max_attempts - attemptsUsed + 1) * 50;
+                const difficultyBonus = GAME_CONFIG.difficulty * 100;
+                
+                finalScore = baseScore + timeBonus + attemptBonus + difficultyBonus;
+            }
+            
+            gameState.score = finalScore;
+            
+            // Update final stats
+            document.getElementById('finalScore').textContent = finalScore;
+            document.getElementById('finalTime').textContent = timeTaken + 's';
+            document.getElementById('attemptsUsed').textContent = attemptsUsed;
+            document.getElementById('securityStatus').textContent = success ? 'SECURED' : 'COMPROMISED';
+            
+            // Update result appearance
+            const gameIcon = document.getElementById('gameIcon');
+            const gameTitle = document.getElementById('gameResultTitle');
+            const securityStatus = document.getElementById('securityStatus');
+            
+            if (success) {
+                gameIcon.className = 'fas fa-shield-alt game-icon text-success';
+                gameTitle.textContent = 'Network Secured!';
+                securityStatus.style.color = '#28a745';
+                
+                // Update network animation
+                document.getElementById('wifiIcon').style.color = '#28a745';
+                document.getElementById('networkStatus').textContent = 'SECURE';
+                document.getElementById('networkStatus').style.color = '#28a745';
+                
+                const waves = document.querySelectorAll('.wave');
+                waves.forEach(wave => {
+                    wave.style.backgroundColor = '#28a745';
+                });
+            } else {
+                gameIcon.className = 'fas fa-exclamation-triangle game-icon text-danger';
+                gameTitle.textContent = 'Security Breach!';
+                securityStatus.style.color = '#dc3545';
+                
+                // Update network animation
+                document.getElementById('wifiIcon').style.color = '#dc3545';
+                document.getElementById('networkStatus').textContent = 'COMPROMISED';
+                document.getElementById('networkStatus').style.color = '#dc3545';
+            }
+            
+            // Disable input
+            document.getElementById('passwordInput').disabled = true;
+            document.getElementById('submitBtn').disabled = true;
+            
+            // Send results to server
+            try {
+                const response = await fetch('/minigames/api/finish-game', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        session_id: gameState.sessionId,
+                        score: finalScore,
+                        game_data: {
+                            success: success,
+                            time_taken: timeTaken,
+                            attempts_used: attemptsUsed,
+                            difficulty: GAME_CONFIG.difficulty,
+                            password_length: GAME_CONFIG.password_length
+                        }
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success && data.rank) {
+                    const rankInfo = document.createElement('div');
+                    rankInfo.className = 'stat-item';
+                    rankInfo.innerHTML = `<i class="fas fa-medal"></i><span>Rank: <strong>#${data.rank}</strong></span>`;
+                    document.querySelector('.result-stats').appendChild(rankInfo);
+                }
+            } catch (error) {
+                console.error('Error finishing game:', error);
+            }
+            
+            // Show game over screen
+            setTimeout(() => {
+                document.getElementById('gameOverScreen').style.display = 'flex';
+            }, 1500);
+        }
+
+        // Restart Game
+        function restartGame() {
+            document.getElementById('gameOverScreen').style.display = 'none';
+            document.getElementById('startScreen').style.display = 'flex';
+            
+            // Reset game state
+            gameState = {
+                isRunning: false,
+                startTime: null,
+                score: 0,
+                timeLeft: GAME_CONFIG.time_limit,
+                attemptsLeft: GAME_CONFIG.max_attempts,
+                completed: false,
+                sessionId: null
+            };
+            
+            // Reset UI
+            document.getElementById('currentScore').textContent = '0';
+            document.getElementById('gameScore').textContent = 'Score: 0';
+            document.getElementById('timeLeft').textContent = GAME_CONFIG.time_limit;
+            document.getElementById('attemptsRemaining').textContent = GAME_CONFIG.max_attempts;
+            document.getElementById('attemptsLeft').textContent = `Attempts: ${GAME_CONFIG.max_attempts}`;
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('passwordInput').disabled = false;
+            document.getElementById('submitBtn').disabled = false;
+            
+            // Reset visual elements
+            document.getElementById('timeLeft').style.color = '';
+            document.querySelector('.status-card .fas.fa-clock').style.color = '';
+            document.getElementById('inputFeedback').innerHTML = 'Type carefully - you have limited attempts!';
+            document.getElementById('inputFeedback').style.color = '#6c757d';
+            
+            // Reset network animation
+            document.getElementById('wifiIcon').style.color = '';
+            document.getElementById('networkStatus').textContent = 'SECURE';
+            document.getElementById('networkStatus').style.color = '';
+            
+            const waves = document.querySelectorAll('.wave');
+            waves.forEach(wave => {
+                wave.classList.remove('active');
+                wave.style.backgroundColor = '';
+            });
+        }
+
+        // Event Listeners
+        document.getElementById('passwordInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkPassword();
+            }
+        });
+
+        document.getElementById('passwordInput').addEventListener('input', function(e) {
+            const input = e.target.value;
+            const maxLength = GAME_CONFIG.password_length;
+            
+            // Update character counter
+            const feedback = document.getElementById('inputFeedback');
+            feedback.textContent = `${input.length}/${maxLength} characters`;
+            
+            // Enable/disable submit button
+            document.getElementById('submitBtn').disabled = input.length === 0;
+        });
+
+        // Prevent paste
+        document.getElementById('passwordInput').addEventListener('paste', function(e) {
+            e.preventDefault();
+            document.getElementById('inputFeedback').textContent = 'Pasting is not allowed! Type manually.';
+            document.getElementById('inputFeedback').style.color = '#dc3545';
+        });
+
+        // Focus management for mobile
+        if (isMobile) {
+            document.getElementById('passwordInput').addEventListener('focus', function() {
+                this.blur(); // Prevent system keyboard
+            });
+        }
+
+        // Initialize when page loads
+        window.addEventListener('load', initGame);
+    </script>
+</body>
+</html>

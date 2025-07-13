@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎮 World.Inc - Mission Games</title>
+    <!-- Bootstrap i FontAwesome CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body class="game-body">
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="{{ url_for('home') }}">
+                <i class="fas fa-globe-americas text-info"></i> WORLD.INC
+            </a>
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text me-3">
+                    <i class="fas fa-user-astronaut text-success"></i> 
+                    Agent: {{ user.username }}
+                </span>
+                <span class="navbar-text me-3" id="totalScore">
+                    Total Score: {{ stats.virus_alert.best_score + stats.space_defence.best_score + stats.wifi_guard.best_score }}
+                </span>
+                <!-- Navigation buttons -->
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="game-container">
+        <div class="container-fluid mt-4">
+            <!-- Header Section -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="text-center mb-4">
+                        <h1 class="text-white">
+                            <i class="fas fa-gamepad text-info"></i>
+                            Mission Games Center
+                        </h1>
+                        <p class="text-white-50 lead">
+                            Choose your mission and save the world, Agent {{ user.username }}!
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Stats Panel -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card bg-secondary">
+                        <div class="card-header">
+                            <h5><i class="fas fa-chart-line text-warning"></i> Mission Statistics</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <!-- 4 kolumny ze statystykami -->
+                                <div class="col-md-3 col-6 mb-3">
+                                    <div class="status-card">
+                                        <i class="fas fa-trophy text-warning"></i>
+                                        <div>Total Missions</div>
+                                        <strong>{{ stats.virus_alert.games_played + stats.space_defence.games_played + stats.wifi_guard.games_played }}</strong>
+                                    </div>
+                                </div>
+                                <!-- ...więcej statystyk -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GŁÓWNY GRID Z 3 MINIGRAM -->
+            <div class="row">
+                <!-- 🦠 VIRUS ALERT CARD -->
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card minigame-card virus-alert-card h-100">
+                        <div class="card-header text-center">
+                            <h4><i class="fas fa-bug text-danger"></i> Virus Alert</h4>
+                            <p class="mb-0">Dodge the deadly viruses!</p>
+                        </div>
+                        <div class="card-body">
+                            <i class="fas fa-bug minigame-icon"></i>
+                            
+                            <p class="text-white">
+                                Navigate through a field of dangerous viruses. Use your agility to survive 
+                                and protect the digital world from corruption!
+                            </p>
+
+                            <!-- Game Stats -->
+                            <div class="stats-mini">
+                                <div class="stat-row">
+                                    <span>Games Played:</span>
+                                    <strong>{{ stats.virus_alert.games_played }}</strong>
+                                </div>
+                                <!-- ...więcej statystyk -->
+                            </div>
+
+                            <!-- Difficulty Selector (5 przycisków 1-5) -->
+                            <div class="difficulty-selector">
+                                <label class="form-label text-white">
+                                    <i class="fas fa-chart-line"></i> Difficulty Level:
+                                </label>
+                                <div class="difficulty-buttons">
+                                    <button class="btn difficulty-btn active" data-difficulty="1">1</button>
+                                    <button class="btn difficulty-btn" data-difficulty="2">2</button>
+                                    <button class="btn difficulty-btn" data-difficulty="3">3</button>
+                                    <button class="btn difficulty-btn" data-difficulty="4">4</button>
+                                    <button class="btn difficulty-btn" data-difficulty="5">5</button>
+                                </div>
+                            </div>
+
+                            <!-- Play Button -->
+                            <div class="text-center mt-3">
+                                <a href="{{ url_for('minigames.virus_alert') }}" class="btn btn-danger btn-lg" id="virusAlertBtn">
+                                    <i class="fas fa-play"></i> Start Mission
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 🚀 SPACE DEFENCE CARD -->
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card minigame-card space-defence-card h-100">
+                        <!-- Podobna struktura jak Virus Alert, ale z ikonami rakiet -->
+                        <div class="card-header text-center">
+                            <h4><i class="fas fa-rocket text-info"></i> Space Defence</h4>
+                            <p class="mb-0">Destroy the alien virus fleet!</p>
+                        </div>
+                        <!-- ...zawartość karty -->
+                    </div>
+                </div>
+
+                <!-- 📶 WIFI GUARD CARD -->
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="card minigame-card wifi-guard-card h-100">
+                        <!-- Podobna struktura z ikonami WiFi -->
+                        <div class="card-header text-center">
+                            <h4><i class="fas fa-wifi text-warning"></i> WiFi Guard</h4>
+                            <p class="mb-0">Secure the network from hackers!</p>
+                        </div>
+                        <!-- ...zawartość karty -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Features Section -->
+            <div class="row">
+                <!-- Hall of Fame Panel -->
+                <div class="col-md-6 mb-4">
+                    <div class="card bg-secondary h-100">
+                        <div class="card-header">
+                            <h5><i class="fas fa-trophy text-warning"></i> Hall of Fame</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-white">
+                                Check your ranking against other World.Inc agents worldwide!
+                            </p>
+                            <div class="d-grid gap-2">
+                                <a href="{{ url_for('minigames.leaderboard', game='virus_alert') }}" class="btn btn-outline-danger">
+                                    <i class="fas fa-bug"></i> Virus Alert Rankings
+                                </a>
+                                <a href="{{ url_for('minigames.leaderboard', game='space_defence') }}" class="btn btn-outline-info">
+                                    <i class="fas fa-rocket"></i> Space Defence Rankings
+                                </a>
+                                <a href="{{ url_for('minigames.leaderboard', game='wifi_guard') }}" class="btn btn-outline-warning">
+                                    <i class="fas fa-wifi"></i> WiFi Guard Rankings
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions Panel -->
+                <div class="col-md-6 mb-4">
+                    <div class="card bg-secondary h-100">
+                        <div class="card-header">
+                            <h5><i class="fas fa-rocket text-info"></i> Quick Actions</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-success" onclick="randomMission()">
+                                    <i class="fas fa-random"></i> Random Mission
+                                </button>
+                                <button class="btn btn-info" onclick="showStats()">
+                                    <i class="fas fa-chart-bar"></i> Detailed Statistics
+                                </button>
+                                <a href="{{ url_for('auth.profile') }}" class="btn btn-outline-light">
+                                    <i class="fas fa-user"></i> Agent Profile
+                                </a>
+                                <a href="{{ url_for('home') }}" class="btn btn-outline-primary">
+                                    <i class="fas fa-home"></i> Operations Center
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mission Briefing Section -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card bg-secondary">
+                        <div class="card-header">
+                            <h5><i class="fas fa-file-alt text-success"></i> Mission Briefing</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <h6 class="text-info">Current Threat Level: <span class="text-warning">ELEVATED</span></h6>
+                                    <p class="text-white">
+                                        Intelligence reports indicate increased digital threats across multiple sectors. 
+                                        Your skills are needed to neutralize virus outbreaks, defend against space-borne 
+                                        digital attacks, and secure communication networks.
+                                    </p>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="text-center">
+                                        <i class="fas fa-shield-alt text-success" style="font-size: 4rem; opacity: 0.7;"></i>
+                                        <div class="mt-2">
+                                            <small class="text-white-50">Agent Security Clearance</small>
+                                            <div class="text-success fw-bold">AUTHORIZED</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Stats Modal -->
+    <div class="modal fade" id="statsModal" tabindex="-1">
+        <!-- Modal z detalami statystyk każdej gry -->
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Obsługa wyboru trudności
+        document.querySelectorAll('.difficulty-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Usuń active z rodzeństwa
+                this.parentNode.querySelectorAll('.difficulty-btn').forEach(sibling => {
+                    sibling.classList.remove('active');
+                });
+                
+                // Dodaj active do klikniętego
+                this.classList.add('active');
+                
+                // Aktualizuj link gry z parametrem difficulty
+                const difficulty = this.dataset.difficulty;
+                const card = this.closest('.minigame-card');
+                const gameLink = card.querySelector('a[href*="minigames"]');
+                
+                if (gameLink) {
+                    const baseUrl = gameLink.href.split('?')[0];
+                    gameLink.href = `${baseUrl}?difficulty=${difficulty}`;
+                }
+            });
+        });
+
+        // Random mission function
+        function randomMission() {
+            const games = ['virus_alert', 'space_defence', 'wifi_guard'];
+            const randomGame = games[Math.floor(Math.random() * games.length)];
+            const randomDifficulty = Math.floor(Math.random() * 5) + 1;
+            
+            const urls = {
+                'virus_alert': "{{ url_for('minigames.virus_alert') }}",
+                'space_defence': "{{ url_for('minigames.space_defence') }}",
+                'wifi_guard': "{{ url_for('minigames.wifi_guard') }}"
+            };
+            
+            window.location.href = `${urls[randomGame]}?difficulty=${randomDifficulty}`;
+        }
+
+        // Show detailed stats modal
+        function showStats() {
+            const modal = new bootstrap.Modal(document.getElementById('statsModal'));
+            modal.show();
+        }
+
+        // Keyboard shortcuts (1-3 for games, R for random, S for stats)
+        document.addEventListener('keydown', function(e) {
+            // ...keyboard handling
+        });
+    </script>
+</body>
+</html>
