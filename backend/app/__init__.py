@@ -92,7 +92,6 @@ def create_app(config_name='development'):
                 "error": str(e)
             }), 500
     
-    # Error handlers
     @app.errorhandler(404)
     def not_found_error(error):
         # Check if it's an API request
@@ -101,11 +100,12 @@ def create_app(config_name='development'):
             return jsonify({
                 "error": "Not Found",
                 "message": "The requested API endpoint was not found",
-                "status_code": 404
+                "status_code": 404,
+                "path": request.path
             }), 404
         else:
-            # For non-API routes, redirect to home
-            return redirect(url_for('home'))
+            # For non-API routes, show custom 404 page
+            return render_template('404.html'), 404
     
     @app.errorhandler(500)
     def internal_error(error):

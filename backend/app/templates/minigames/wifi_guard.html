@@ -243,6 +243,74 @@
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+                function hideAllOverlays() {
+            const overlay = document.getElementById('gameOverlay');
+            const screens = overlay.querySelectorAll('.overlay-screen');
+            
+            screens.forEach(screen => {
+                screen.style.display = 'none';
+                screen.classList.add('hidden');
+            });
+            
+            overlay.classList.add('hidden');
+            overlay.style.display = 'none';
+        }
+
+        function showOverlayScreen(screenId) {
+            const overlay = document.getElementById('gameOverlay');
+            const screens = overlay.querySelectorAll('.overlay-screen');
+            
+            // Ukryj wszystkie ekrany
+            screens.forEach(screen => {
+                screen.style.display = 'none';
+                screen.classList.add('hidden');
+            });
+            
+            // Pokaż konkretny ekran
+            const targetScreen = document.getElementById(screenId);
+            if (targetScreen) {
+                overlay.classList.remove('hidden');
+                overlay.style.display = 'block';
+                targetScreen.style.display = 'flex';
+                targetScreen.classList.remove('hidden');
+            }
+        }
+
+        function hideInstructions() {
+            const instructions = document.querySelectorAll('.controls-instructions, .mobile-instructions, .desktop-instructions');
+            instructions.forEach(instruction => {
+                instruction.classList.add('fade-out');
+                setTimeout(() => {
+                    instruction.style.display = 'none';
+                }, 1000);
+            });
+        }
+
+        function activateGameCanvas() {
+            const canvas = document.getElementById('gameCanvas');
+            const navbar = document.querySelector('.navbar');
+            
+            if (canvas) {
+                canvas.classList.add('active');
+            }
+            
+            if (navbar) {
+                navbar.classList.add('game-active');
+            }
+        }
+
+        function deactivateGameCanvas() {
+            const canvas = document.getElementById('gameCanvas');
+            const navbar = document.querySelector('.navbar');
+            
+            if (canvas) {
+                canvas.classList.remove('active');
+            }
+            
+            if (navbar) {
+                navbar.classList.remove('game-active');
+            }
+        }
         // Game Configuration
         const GAME_CONFIG = {
             password: "{{ game_config.password }}",
@@ -329,6 +397,11 @@
 
         // Begin Game
         function beginGame() {
+            hideAllOverlays();
+            activateGameCanvas();
+            
+            setTimeout(hideInstructions, 3000);
+
             gameState.isRunning = true;
             gameState.startTime = Date.now();
             gameState.score = 0;
@@ -719,6 +792,40 @@
 
         // Initialize when page loads
         window.addEventListener('load', initGame);
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Początkowo pokaż tylko start screen
+            showOverlayScreen('startScreen');
+            
+            // Ukryj instrukcje automatycznie gdy gra się rozpocznie
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'childList' || mutation.type === 'attributes') {
+                        const overlay = document.getElementById('gameOverlay');
+                        if (overlay && overlay.classList.contains('hidden')) {
+                            setTimeout(hideInstructions, 2000);
+                        }
+                    }
+                });
+            });
+            
+            const overlay = document.getElementById('gameOverlay');
+            if (overlay) {
+                observer.observe(overlay, {
+                    attributes: true,
+                    childList: true,
+                    subtree: true
+                });
+            }
+        });
+
+        // Fixuj zamglenie podczas ładowania
+        window.addEventListener('load', function() {
+            // Upewnij się że na początku tylko start screen jest widoczny
+            setTimeout(() => {
+                showOverlayScreen('startScreen');
+            }, 100);
+        });
     </script>
 </body>
 </html>

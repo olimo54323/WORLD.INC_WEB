@@ -24,7 +24,12 @@
                 <span class="navbar-text me-3" id="totalScore">
                     Total Score: {{ stats.virus_alert.best_score + stats.space_defence.best_score + stats.wifi_guard.best_score }}
                 </span>
-                <!-- Navigation buttons -->
+                <a href="{{ url_for('auth.profile') }}" class="btn btn-outline-info btn-sm me-2">
+                    <i class="fas fa-user"></i> Profile
+                </a>
+                <a href="{{ url_for('home') }}" class="btn btn-outline-light btn-sm">
+                    <i class="fas fa-home"></i> Home
+                </a>
             </div>
         </div>
     </nav>
@@ -56,7 +61,6 @@
                         </div>
                         <div class="card-body">
                             <div class="row text-center">
-                                <!-- 4 kolumny ze statystykami -->
                                 <div class="col-md-3 col-6 mb-3">
                                     <div class="status-card">
                                         <i class="fas fa-trophy text-warning"></i>
@@ -64,7 +68,31 @@
                                         <strong>{{ stats.virus_alert.games_played + stats.space_defence.games_played + stats.wifi_guard.games_played }}</strong>
                                     </div>
                                 </div>
-                                <!-- ...więcej statystyk -->
+                                <div class="col-md-3 col-6 mb-3">
+                                    <div class="status-card">
+                                        <i class="fas fa-star text-success"></i>
+                                        <div>Best Score</div>
+                                        <strong>{{ [stats.virus_alert.best_score, stats.space_defence.best_score, stats.wifi_guard.best_score]|max }}</strong>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6 mb-3">
+                                    <div class="status-card">
+                                        <i class="fas fa-clock text-info"></i>
+                                        <div>Total Time</div>
+                                        <strong>{{ ((stats.virus_alert.total_time + stats.space_defence.total_time + stats.wifi_guard.total_time) / 60)|round }}m</strong>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-6 mb-3">
+                                    <div class="status-card">
+                                        <i class="fas fa-medal text-danger"></i>
+                                        <div>Best Rank</div>
+                                        <strong>
+                                            {% set ranks = [stats.virus_alert.rank, stats.space_defence.rank, stats.wifi_guard.rank] %}
+                                            {% set valid_ranks = ranks|select('number')|list %}
+                                            {% if valid_ranks %}#{{ valid_ranks|min }}{% else %}--{% endif %}
+                                        </strong>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -94,15 +122,22 @@
                                     <span>Games Played:</span>
                                     <strong>{{ stats.virus_alert.games_played }}</strong>
                                 </div>
-                                <!-- ...więcej statystyk -->
+                                <div class="stat-row">
+                                    <span>Best Score:</span>
+                                    <strong>{{ stats.virus_alert.best_score }}</strong>
+                                </div>
+                                <div class="stat-row">
+                                    <span>Your Rank:</span>
+                                    <strong>{% if stats.virus_alert.rank %}#{{ stats.virus_alert.rank }}{% else %}--{% endif %}</strong>
+                                </div>
                             </div>
 
-                            <!-- Difficulty Selector (5 przycisków 1-5) -->
+                            <!-- Difficulty Selector -->
                             <div class="difficulty-selector">
                                 <label class="form-label text-white">
                                     <i class="fas fa-chart-line"></i> Difficulty Level:
                                 </label>
-                                <div class="difficulty-buttons">
+                                <div class="difficulty-buttons virus-difficulty">
                                     <button class="btn difficulty-btn active" data-difficulty="1">1</button>
                                     <button class="btn difficulty-btn" data-difficulty="2">2</button>
                                     <button class="btn difficulty-btn" data-difficulty="3">3</button>
@@ -124,24 +159,110 @@
                 <!-- 🚀 SPACE DEFENCE CARD -->
                 <div class="col-lg-4 col-md-6 mb-4">
                     <div class="card minigame-card space-defence-card h-100">
-                        <!-- Podobna struktura jak Virus Alert, ale z ikonami rakiet -->
                         <div class="card-header text-center">
                             <h4><i class="fas fa-rocket text-info"></i> Space Defence</h4>
                             <p class="mb-0">Destroy the alien virus fleet!</p>
                         </div>
-                        <!-- ...zawartość karty -->
+                        <div class="card-body">
+                            <i class="fas fa-rocket minigame-icon"></i>
+                            
+                            <p class="text-white">
+                                Command your spaceship to eliminate virus invaders from outer space. 
+                                Use precise aim and quick reflexes to defend Earth!
+                            </p>
+
+                            <!-- Game Stats -->
+                            <div class="stats-mini">
+                                <div class="stat-row">
+                                    <span>Games Played:</span>
+                                    <strong>{{ stats.space_defence.games_played }}</strong>
+                                </div>
+                                <div class="stat-row">
+                                    <span>Best Score:</span>
+                                    <strong>{{ stats.space_defence.best_score }}</strong>
+                                </div>
+                                <div class="stat-row">
+                                    <span>Your Rank:</span>
+                                    <strong>{% if stats.space_defence.rank %}#{{ stats.space_defence.rank }}{% else %}--{% endif %}</strong>
+                                </div>
+                            </div>
+
+                            <!-- Difficulty Selector -->
+                            <div class="difficulty-selector">
+                                <label class="form-label text-white">
+                                    <i class="fas fa-chart-line"></i> Difficulty Level:
+                                </label>
+                                <div class="difficulty-buttons space-difficulty">
+                                    <button class="btn difficulty-btn active" data-difficulty="1">1</button>
+                                    <button class="btn difficulty-btn" data-difficulty="2">2</button>
+                                    <button class="btn difficulty-btn" data-difficulty="3">3</button>
+                                    <button class="btn difficulty-btn" data-difficulty="4">4</button>
+                                    <button class="btn difficulty-btn" data-difficulty="5">5</button>
+                                </div>
+                            </div>
+
+                            <!-- Play Button -->
+                            <div class="text-center mt-3">
+                                <a href="{{ url_for('minigames.space_defence') }}" class="btn btn-info btn-lg" id="spaceDefenceBtn">
+                                    <i class="fas fa-rocket"></i> Launch Mission
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- 📶 WIFI GUARD CARD -->
                 <div class="col-lg-4 col-md-6 mb-4">
                     <div class="card minigame-card wifi-guard-card h-100">
-                        <!-- Podobna struktura z ikonami WiFi -->
                         <div class="card-header text-center">
                             <h4><i class="fas fa-wifi text-warning"></i> WiFi Guard</h4>
                             <p class="mb-0">Secure the network from hackers!</p>
                         </div>
-                        <!-- ...zawartość karty -->
+                        <div class="card-body">
+                            <i class="fas fa-wifi minigame-icon"></i>
+                            
+                            <p class="text-white">
+                                Protect critical network infrastructure by entering security codes correctly. 
+                                Speed and accuracy are essential for cybersecurity!
+                            </p>
+
+                            <!-- Game Stats -->
+                            <div class="stats-mini">
+                                <div class="stat-row">
+                                    <span>Games Played:</span>
+                                    <strong>{{ stats.wifi_guard.games_played }}</strong>
+                                </div>
+                                <div class="stat-row">
+                                    <span>Best Score:</span>
+                                    <strong>{{ stats.wifi_guard.best_score }}</strong>
+                                </div>
+                                <div class="stat-row">
+                                    <span>Your Rank:</span>
+                                    <strong>{% if stats.wifi_guard.rank %}#{{ stats.wifi_guard.rank }}{% else %}--{% endif %}</strong>
+                                </div>
+                            </div>
+
+                            <!-- Difficulty Selector -->
+                            <div class="difficulty-selector">
+                                <label class="form-label text-white">
+                                    <i class="fas fa-chart-line"></i> Difficulty Level:
+                                </label>
+                                <div class="difficulty-buttons wifi-difficulty">
+                                    <button class="btn difficulty-btn active" data-difficulty="1">1</button>
+                                    <button class="btn difficulty-btn" data-difficulty="2">2</button>
+                                    <button class="btn difficulty-btn" data-difficulty="3">3</button>
+                                    <button class="btn difficulty-btn" data-difficulty="4">4</button>
+                                    <button class="btn difficulty-btn" data-difficulty="5">5</button>
+                                </div>
+                            </div>
+
+                            <!-- Play Button -->
+                            <div class="text-center mt-3">
+                                <a href="{{ url_for('minigames.wifi_guard') }}" class="btn btn-warning btn-lg" id="wifiGuardBtn">
+                                    <i class="fas fa-shield-alt"></i> Secure Network
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -215,6 +336,26 @@
                                         Your skills are needed to neutralize virus outbreaks, defend against space-borne 
                                         digital attacks, and secure communication networks.
                                     </p>
+                                    <div class="row mt-3">
+                                        <div class="col-sm-4 text-center">
+                                            <div class="text-danger">
+                                                <i class="fas fa-bug" style="font-size: 2rem;"></i>
+                                                <div class="mt-1"><small>Virus Threats</small></div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-4 text-center">
+                                            <div class="text-info">
+                                                <i class="fas fa-rocket" style="font-size: 2rem;"></i>
+                                                <div class="mt-1"><small>Space Attacks</small></div>
+                                            </div>
+                                        </div>
+                                        <div class="col-sm-4 text-center">
+                                            <div class="text-warning">
+                                                <i class="fas fa-wifi" style="font-size: 2rem;"></i>
+                                                <div class="mt-1"><small>Network Breaches</small></div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="text-center">
@@ -235,17 +376,109 @@
 
     <!-- Detailed Stats Modal -->
     <div class="modal fade" id="statsModal" tabindex="-1">
-        <!-- Modal z detalami statystyk każdej gry -->
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content bg-dark text-white">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-chart-bar text-info"></i> Detailed Agent Statistics
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <!-- Virus Alert Stats -->
+                        <div class="col-md-4 mb-3">
+                            <div class="card bg-danger bg-opacity-25">
+                                <div class="card-header">
+                                    <h6><i class="fas fa-bug"></i> Virus Alert</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="stat-row">
+                                        <span>Games:</span> <strong>{{ stats.virus_alert.games_played }}</strong>
+                                    </div>
+                                    <div class="stat-row">
+                                        <span>Best Score:</span> <strong>{{ stats.virus_alert.best_score }}</strong>
+                                    </div>
+                                    <div class="stat-row">
+                                        <span>Avg Score:</span> <strong>{{ stats.virus_alert.avg_score }}</strong>
+                                    </div>
+                                    <div class="stat-row">
+                                        <span>Total Time:</span> <strong>{{ (stats.virus_alert.total_time / 60)|round }}m</strong>
+                                    </div>
+                                    <div class="stat-row">
+                                        <span>Rank:</span> <strong>{% if stats.virus_alert.rank %}#{{ stats.virus_alert.rank }}{% else %}--{% endif %}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Space Defence Stats -->
+                        <div class="col-md-4 mb-3">
+                            <div class="card bg-info bg-opacity-25">
+                                <div class="card-header">
+                                    <h6><i class="fas fa-rocket"></i> Space Defence</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="stat-row">
+                                        <span>Games:</span> <strong>{{ stats.space_defence.games_played }}</strong>
+                                    </div>
+                                    <div class="stat-row">
+                                        <span>Best Score:</span> <strong>{{ stats.space_defence.best_score }}</strong>
+                                    </div>
+                                    <div class="stat-row">
+                                        <span>Avg Score:</span> <strong>{{ stats.space_defence.avg_score }}</strong>
+                                    </div>
+                                    <div class="stat-row">
+                                        <span>Total Time:</span> <strong>{{ (stats.space_defence.total_time / 60)|round }}m</strong>
+                                    </div>
+                                    <div class="stat-row">
+                                        <span>Rank:</span> <strong>{% if stats.space_defence.rank %}#{{ stats.space_defence.rank }}{% else %}--{% endif %}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- WiFi Guard Stats -->
+                        <div class="col-md-4 mb-3">
+                            <div class="card bg-warning bg-opacity-25">
+                                <div class="card-header">
+                                    <h6><i class="fas fa-wifi"></i> WiFi Guard</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="stat-row">
+                                        <span>Games:</span> <strong>{{ stats.wifi_guard.games_played }}</strong>
+                                    </div>
+                                    <div class="stat-row">
+                                        <span>Best Score:</span> <strong>{{ stats.wifi_guard.best_score }}</strong>
+                                    </div>
+                                    <div class="stat-row">
+                                        <span>Avg Score:</span> <strong>{{ stats.wifi_guard.avg_score }}</strong>
+                                    </div>
+                                    <div class="stat-row">
+                                        <span>Total Time:</span> <strong>{{ (stats.wifi_guard.total_time / 60)|round }}m</strong>
+                                    </div>
+                                    <div class="stat-row">
+                                        <span>Rank:</span> <strong>{% if stats.wifi_guard.rank %}#{{ stats.wifi_guard.rank }}{% else %}--{% endif %}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Obsługa wyboru trudności
+        // Obsługa wyboru trudności dla wszystkich gier
         document.querySelectorAll('.difficulty-btn').forEach(btn => {
             btn.addEventListener('click', function() {
-                // Usuń active z rodzeństwa
-                this.parentNode.querySelectorAll('.difficulty-btn').forEach(sibling => {
+                // Usuń active z rodzeństwa w tej samej grupie
+                const parentGroup = this.closest('.difficulty-buttons');
+                parentGroup.querySelectorAll('.difficulty-btn').forEach(sibling => {
                     sibling.classList.remove('active');
                 });
                 
@@ -266,17 +499,35 @@
 
         // Random mission function
         function randomMission() {
-            const games = ['virus_alert', 'space_defence', 'wifi_guard'];
+            const games = [
+                { name: 'virus_alert', url: "{{ url_for('minigames.virus_alert') }}" },
+                { name: 'space_defence', url: "{{ url_for('minigames.space_defence') }}" },
+                { name: 'wifi_guard', url: "{{ url_for('minigames.wifi_guard') }}" }
+            ];
+            
             const randomGame = games[Math.floor(Math.random() * games.length)];
             const randomDifficulty = Math.floor(Math.random() * 5) + 1;
             
-            const urls = {
-                'virus_alert': "{{ url_for('minigames.virus_alert') }}",
-                'space_defence': "{{ url_for('minigames.space_defence') }}",
-                'wifi_guard': "{{ url_for('minigames.wifi_guard') }}"
-            };
+            // Show random selection notification
+            const notification = document.createElement('div');
+            notification.className = 'alert alert-info position-fixed';
+            notification.style.cssText = 'top: 100px; right: 20px; z-index: 9999; min-width: 300px;';
+            notification.innerHTML = `
+                <i class="fas fa-random"></i>
+                <strong>Random Mission Selected!</strong><br>
+                Game: ${randomGame.name.replace('_', ' ').toUpperCase()}<br>
+                Difficulty: ${randomDifficulty}
+            `;
             
-            window.location.href = `${urls[randomGame]}?difficulty=${randomDifficulty}`;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                window.location.href = `${randomGame.url}?difficulty=${randomDifficulty}`;
+            }, 2000);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 2000);
         }
 
         // Show detailed stats modal
@@ -287,8 +538,147 @@
 
         // Keyboard shortcuts (1-3 for games, R for random, S for stats)
         document.addEventListener('keydown', function(e) {
-            // ...keyboard handling
+            // Nie aktywuj skrótów gdy user pisze w polu tekstowym
+            if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') {
+                return;
+            }
+            
+            switch(e.key.toLowerCase()) {
+                case '1':
+                    document.getElementById('virusAlertBtn').click();
+                    break;
+                case '2':
+                    document.getElementById('spaceDefenceBtn').click();
+                    break;
+                case '3':
+                    document.getElementById('wifiGuardBtn').click();
+                    break;
+                case 'r':
+                    randomMission();
+                    break;
+                case 's':
+                    showStats();
+                    break;
+                case 'h':
+                    window.location.href = "{{ url_for('home') }}";
+                    break;
+                case 'p':
+                    window.location.href = "{{ url_for('auth.profile') }}";
+                    break;
+            }
         });
+
+        // Add loading animations for game buttons
+        document.querySelectorAll('a[href*="minigames/"]').forEach(link => {
+            link.addEventListener('click', function(e) {
+                const originalText = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading Mission...';
+                this.style.pointerEvents = 'none';
+                
+                // Restore original text after delay in case navigation fails
+                setTimeout(() => {
+                    if (this.innerHTML.includes('Loading Mission...')) {
+                        this.innerHTML = originalText;
+                        this.style.pointerEvents = 'auto';
+                    }
+                }, 5000);
+            });
+        });
+
+        // Add hover effects to game cards
+        document.querySelectorAll('.minigame-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-10px) scale(1.02)';
+                this.style.transition = 'all 0.3s ease';
+                
+                // Add glow effect
+                const icon = this.querySelector('.minigame-icon');
+                if (icon) {
+                    icon.style.textShadow = '0 0 20px currentColor';
+                }
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) scale(1)';
+                
+                // Remove glow effect
+                const icon = this.querySelector('.minigame-icon');
+                if (icon) {
+                    icon.style.textShadow = '';
+                }
+            });
+        });
+
+        // Auto-update total score in navbar
+        function updateTotalScore() {
+            const virusScore = {{ stats.virus_alert.best_score }};
+            const spaceScore = {{ stats.space_defence.best_score }};
+            const wifiScore = {{ stats.wifi_guard.best_score }};
+            const totalScore = virusScore + spaceScore + wifiScore;
+            
+            document.getElementById('totalScore').textContent = `Total Score: ${totalScore}`;
+        }
+
+        // Show tips for new players
+        document.addEventListener('DOMContentLoaded', function() {
+            const totalGames = {{ stats.virus_alert.games_played + stats.space_defence.games_played + stats.wifi_guard.games_played }};
+            
+            if (totalGames === 0) {
+                // Show welcome tips for new players
+                setTimeout(() => {
+                    const tipDiv = document.createElement('div');
+                    tipDiv.className = 'alert alert-info position-fixed';
+                    tipDiv.style.cssText = 'top: 100px; left: 50%; transform: translateX(-50%); z-index: 9999; max-width: 500px;';
+                    tipDiv.innerHTML = `
+                        <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+                        <h6><i class="fas fa-lightbulb"></i> Welcome, New Agent!</h6>
+                        <p class="mb-2">Start with <strong>Difficulty 1</strong> to learn the controls.</p>
+                        <p class="mb-0">Use keyboard shortcuts: <kbd>1</kbd>, <kbd>2</kbd>, <kbd>3</kbd> for quick game access!</p>
+                    `;
+                    
+                    document.body.appendChild(tipDiv);
+                    
+                    // Auto-remove after 10 seconds
+                    setTimeout(() => {
+                        if (tipDiv.parentElement) {
+                            tipDiv.remove();
+                        }
+                    }, 10000);
+                }, 1000);
+            }
+        });
+
+        // Add keyboard shortcuts info
+        document.addEventListener('DOMContentLoaded', function() {
+            const helpInfo = document.createElement('div');
+            helpInfo.innerHTML = `
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="alert alert-dark">
+                            <small class="text-white-50">
+                                <i class="fas fa-keyboard"></i> 
+                                <strong>Keyboard Shortcuts:</strong> 
+                                <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> (Games), 
+                                <kbd>R</kbd> (Random), 
+                                <kbd>S</kbd> (Stats), 
+                                <kbd>H</kbd> (Home), 
+                                <kbd>P</kbd> (Profile)
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            const container = document.querySelector('.container-fluid');
+            if (container) {
+                container.appendChild(helpInfo);
+            }
+        });
+
+        // Real-time stats update (demo - would need WebSocket in production)
+        setInterval(() => {
+            updateTotalScore();
+        }, 30000); // Update every 30 seconds
     </script>
 </body>
 </html>

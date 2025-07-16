@@ -110,6 +110,9 @@
                                         <button class="btn btn-secondary" onclick="alert('⚙️ Ustawienia będą dostępne wkrótce!')">
                                             <i class="fas fa-cog"></i> Ustawienia Konta
                                         </button>
+                                        <button class="btn btn-danger" onclick="showDeleteAccountModal()">
+                                            <i class="fas fa-trash-alt"></i> Usuń Konto
+                                        </button>
                                     </div>
                                 </div>
 
@@ -220,6 +223,41 @@
             </div>
         </div>
     </div>
+    <div class="modal fade" id="deleteAccountModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content bg-dark text-white border-danger">
+                <div class="modal-header border-danger">
+                    <h5 class="modal-title text-danger">
+                        <i class="fas fa-exclamation-triangle text-danger"></i> Usuwanie Konta
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger">
+                        <h6><i class="fas fa-skull"></i> OSTRZEŻENIE</h6>
+                        <p class="mb-0">Ta operacja jest <strong>nieodwracalna</strong> i usunie wszystkie Twoje dane!</p>
+                    </div>
+                    <p class="text-white">
+                        Czy na pewno chcesz przejść do strony usuwania konta? 
+                        Zostaniesz przekierowany do bezpiecznego formularza z dodatkowymi zabezpieczeniami.
+                    </p>
+                    <ul class="text-warning">
+                        <li>Wszystkie dane osobowe zostaną usunięte</li>
+                        <li>Historia gier i wyniki - bezpowrotnie utracone</li>
+                        <li>Pozycja w rankingach - usunięta</li>
+                    </ul>
+                </div>
+                <div class="modal-footer border-danger">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Anuluj
+                    </button>
+                    <a href="{{ url_for('auth.delete_account') }}" class="btn btn-danger">
+                        <i class="fas fa-trash-alt"></i> Przejdź do Usuwania
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     
@@ -256,6 +294,11 @@
     <script>
         function showChangePasswordModal() {
             const modal = new bootstrap.Modal(document.getElementById('changePasswordModal'));
+            modal.show();
+        }
+
+        function showDeleteAccountModal() {
+            const modal = new bootstrap.Modal(document.getElementById('deleteAccountModal'));
             modal.show();
         }
         

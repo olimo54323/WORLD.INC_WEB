@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌍 World.Inc - Usuwanie Konta</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body class="auth-body">
+    <!-- Background Animation -->
+    <div class="auth-background">
+        <div class="floating-icon" style="--delay: 0s; --duration: 8s;">
+            <i class="fas fa-skull"></i>
+        </div>
+        <div class="floating-icon" style="--delay: 2s; --duration: 10s;">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div class="floating-icon" style="--delay: 4s; --duration: 12s;">
+            <i class="fas fa-trash-alt"></i>
+        </div>
+        <div class="floating-icon" style="--delay: 6s; --duration: 9s;">
+            <i class="fas fa-user-slash"></i>
+        </div>
+    </div>
+
+    <div class="auth-container">
+        <!-- Logo Section -->
+        <div class="auth-logo">
+            <i class="fas fa-exclamation-triangle text-danger"></i>
+            <h1 class="auth-title text-danger">UWAGA!</h1>
+            <p class="auth-subtitle">🚨 Operacja nieodwracalna - usuwanie konta agenta</p>
+        </div>
+
+        <!-- Delete Account Form -->
+        <div class="auth-card">
+            <div class="auth-card-header" style="background: linear-gradient(135deg, #dc3545, #a71e2a);">
+                <i class="fas fa-user-slash"></i>
+                <h3>Usuwanie Konta Agenta</h3>
+                <p>Agent: {{ user.username }}</p>
+            </div>
+
+            <div class="auth-card-body">
+                <!-- Flash Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'danger' else 'success' if category == 'success' else 'warning' if category == 'warning' else 'info' }} auth-alert">
+                                {% if category == 'success' %}
+                                    <i class="fas fa-check-circle"></i>
+                                {% elif category == 'danger' %}
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                {% elif category == 'warning' %}
+                                    <i class="fas fa-exclamation-circle"></i>
+                                {% else %}
+                                    <i class="fas fa-info-circle"></i>
+                                {% endif %}
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Warning Section -->
+                <div class="alert alert-danger">
+                    <h6><i class="fas fa-exclamation-triangle"></i> OSTRZEŻENIE</h6>
+                    <p class="mb-2">Ta operacja jest <strong>nieodwracalna</strong>. Zostaną usunięte:</p>
+                    <ul class="mb-0">
+                        <li>Twoje dane osobowe</li>
+                        <li>Historia gier i wyniki</li>
+                        <li>Wszystkie osiągnięcia</li>
+                        <li>Pozycja w rankingach</li>
+                    </ul>
+                </div>
+
+                <form method="POST" id="deleteForm" class="auth-form">
+                    <div class="auth-field">
+                        <label for="password" class="auth-label">
+                            <i class="fas fa-lock"></i> Potwierdź hasłem
+                        </label>
+                        <div class="auth-password-field">
+                            <input 
+                                type="password" 
+                                class="auth-input" 
+                                id="password" 
+                                name="password" 
+                                placeholder="Wprowadź swoje hasło"
+                                required
+                                autocomplete="current-password"
+                            >
+                            <button type="button" class="password-toggle" onclick="togglePassword('password')">
+                                <i class="fas fa-eye" id="password-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="auth-field">
+                        <label for="confirmation" class="auth-label">
+                            <i class="fas fa-keyboard"></i> Wpisz potwierdzenie
+                        </label>
+                        <input 
+                            type="text" 
+                            class="auth-input" 
+                            id="confirmation" 
+                            name="confirmation" 
+                            placeholder="Wpisz: USUŃ MOJE KONTO"
+                            required
+                            autocomplete="off"
+                        >
+                        <div class="auth-field-help">
+                            Wpisz dokładnie: <strong>USUŃ MOJE KONTO</strong>
+                        </div>
+                    </div>
+
+                    <!-- Final Warning -->
+                    <div class="auth-checkbox">
+                        <input type="checkbox" id="finalConfirm" required>
+                        <label for="finalConfirm">
+                            Rozumiem, że ta operacja jest <strong>nieodwracalna</strong> i wszystkie moje dane zostaną <strong>całkowicie usunięte</strong>
+                        </label>
+                    </div>
+
+                    <button type="submit" class="auth-btn" style="background: linear-gradient(135deg, #dc3545, #a71e2a);" disabled id="deleteBtn">
+                        <i class="fas fa-trash-alt"></i>
+                        USUŃ KONTO CAŁKOWICIE
+                    </button>
+                </form>
+
+                <div class="auth-divider">
+                    <span>lub</span>
+                </div>
+
+                <div class="auth-links">
+                    <p>Może jednak zostaniesz z nami?</p>
+                    <a href="{{ url_for('auth.profile') }}" class="auth-link-btn" style="background: linear-gradient(135deg, #28a745, #1e7e34);">
+                        <i class="fas fa-arrow-left"></i>
+                        Powrót do profilu
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Back to Home -->
+        <div class="auth-back">
+            <a href="{{ url_for('home') }}" class="auth-back-link">
+                <i class="fas fa-arrow-left"></i>
+                Powrót do centrum operacji
+            </a>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Toggle password visibility
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
+            const eye = document.getElementById(fieldId + '-eye');
+            
+            if (field.type === 'password') {
+                field.type = 'text';
+                eye.className = 'fas fa-eye-slash';
+            } else {
+                field.type = 'password';
+                eye.className = 'fas fa-eye';
+            }
+        }
+
+        // Form validation
+        function validateForm() {
+            const password = document.getElementById('password').value;
+            const confirmation = document.getElementById('confirmation').value;
+            const finalConfirm = document.getElementById('finalConfirm').checked;
+            const deleteBtn = document.getElementById('deleteBtn');
+            
+            const isValid = password.length > 0 && 
+                           confirmation === 'USUŃ MOJE KONTO' && 
+                           finalConfirm;
+            
+            deleteBtn.disabled = !isValid;
+            
+            if (isValid) {
+                deleteBtn.style.opacity = '1';
+            } else {
+                deleteBtn.style.opacity = '0.6';
+            }
+        }
+
+        // Real-time validation
+        document.getElementById('password').addEventListener('input', validateForm);
+        document.getElementById('confirmation').addEventListener('input', validateForm);
+        document.getElementById('finalConfirm').addEventListener('change', validateForm);
+
+        // Form submission with additional confirmation
+        document.getElementById('deleteForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const confirmation = document.getElementById('confirmation').value;
+            
+            if (confirmation !== 'USUŃ MOJE KONTO') {
+                showAlert('Nieprawidłowe potwierdzenie. Wpisz dokładnie: USUŃ MOJE KONTO', 'danger');
+                return;
+            }
+            
+            // Final browser confirmation
+            const finalConfirm = confirm(
+                '⚠️ OSTATNIE OSTRZEŻENIE ⚠️\n\n' +
+                'Czy na pewno chcesz CAŁKOWICIE usunąć swoje konto?\n\n' +
+                '• Wszystkie dane zostaną bezpowrotnie utracone\n' +
+                '• Historia gier i wyniki - USUNIĘTE\n' +
+                '• Pozycja w rankingach - UTRACONA\n' +
+                '• Ta operacja jest NIEODWRACALNA\n\n' +
+                'Kliknij OK aby kontynuować lub Anuluj aby przerwać.'
+            );
+            
+            if (!finalConfirm) {
+                showAlert('Usuwanie konta zostało anulowane', 'info');
+                return;
+            }
+            
+            // Show loading state
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Usuwanie konta...';
+            submitBtn.disabled = true;
+            
+            // Submit form
+            setTimeout(() => {
+                this.submit();
+            }, 1000);
+        });
+
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} auth-alert`;
+            alertDiv.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'danger' ? 'exclamation-triangle' : 'info-circle'}"></i>
+                ${message}
+            `;
+            
+            const form = document.querySelector('.auth-form');
+            form.insertBefore(alertDiv, form.firstChild);
+            
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+
+        // Auto-focus first input
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('password').focus();
+            validateForm(); // Initial validation
+        });
+
+        // Prevent accidental page close
+        window.addEventListener('beforeunload', function(e) {
+            const password = document.getElementById('password').value;
+            const confirmation = document.getElementById('confirmation').value;
+            
+            if (password.length > 0 || confirmation.length > 0) {
+                e.preventDefault();
+                e.returnValue = 'Masz niewypełniony formularz. Czy na pewno chcesz opuścić stronę?';
+            }
+        });
+
+        // Show character counter for confirmation
+        document.getElementById('confirmation').addEventListener('input', function() {
+            const target = 'USUŃ MOJE KONTO';
+            const current = this.value;
+            const helpText = this.nextElementSibling;
+            
+            if (current === target) {
+                helpText.innerHTML = '<strong style="color: #28a745;">✓ Potwierdzenie poprawne</strong>';
+            } else if (current.length > 0) {
+                helpText.innerHTML = `Wpisz dokładnie: <strong>USUŃ MOJE KONTO</strong> (${current.length}/${target.length})`;
+            } else {
+                helpText.innerHTML = 'Wpisz dokładnie: <strong>USUŃ MOJE KONTO</strong>';
+            }
+        });
+    </script>
+</body>
+</html>

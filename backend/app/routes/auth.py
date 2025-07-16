@@ -179,3 +179,93 @@ def check_auth():
             })
     
     return jsonify({'authenticated': False})
+
+@auth_bp.route('/delete-account', methods=['GET', 'POST'])
+def delete_account():
+    """Usuwanie konta użytkownika"""
+    if 'user_id' not in session:
+        if request.is_json:
+            return jsonify({'success': False, 'message': 'Wymagane logowanie'}), 401
+        flash('Musisz się zalogować aby usunąć konto', 'warning')
+        return redirect(url_for('auth.login'))
+    
+    user = User.query.get(session['user_id'])
+    if not user:
+        session.clear()
+        if request.is_json:
+            return jsonify({'success': False, 'message': 'Użytkownik nie istnieje'}), 404
+        flash('Użytkownik nie istnieje', 'danger')
+        return redirect(url_for('auth.login'))
+    
+    if request.method == 'POST':
+        if request.is_json:
+            data = request.get_json()
+            password = data.get('password', '')
+            confirmation = data.get('confirmation', '')
+        else:
+            password = request.form.get('password', '')
+            confirmation = request.form.get('confirmation', '')
+        
+        # Sprawdź hasło
+        if not password or not user.check_password(password):
+            if request.is_json:
+                return jsonify({'success': False, 'message': 'Nieprawidłowe hasło'}), 400
+            flash('Nieprawidłowe hasło', 'danger')
+            return render_template('auth/delete_account.html', user=user)
+        
+        # Sprawdź potwierdzenie
+        if confirmation != 'USUŃ MOJE KONTO':
+            if request.is_json:
+                return jsonify({'success': False, 'message': 'Nieprawidłowe potwierdzenie'}), 400
+            flash('Musisz wpisać dokładnie: USUŃ MOJE KONTO', 'danger')
+            return render_template('auth/delete_account.html', user=user)
+        
+        try:
+            # Usuń wszystkie powiązane dane
+            from app.models.minigames import GameSession
+            
+            # Usuń sesje gier
+            GameSession.query.filter_by(user_id=user.id).delete()
+            
+            # Usuń użytkownika
+            username = user.username
+            db.session.delete(user)
+            db.session.commit()
+            
+            # Wyloguj
+            session.clear()
+            
+            if request.is_json:
+                return jsonify({
+                    'success': True, 
+                    'message': f'Konto {username} zostało całkowicie usunięte'
+                })
+            
+            flash(f'Konto {username} zostało całkowicie usunięte. Żegnamy, agencie!', 'success')
+            return redirect(url_for('home'))
+            
+        except Exception as e:
+            db.session.rollback()
+            if request.is_json:
+                return jsonify({'success': False, 'message': 'Błąd podczas usuwania konta'}), 500
+            flash('Błąd podczas usuwania konta. Spróbuj ponownie.', 'danger')
+    
+    return render_template('auth/delete_account.html', user=user)
+
+@auth_bp.route('/check-password', methods=['POST'])
+def check_password():
+    """API endpoint do sprawdzania hasła"""
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Wymagane logowanie'}), 401
+    
+    user = User.query.get(session['user_id'])
+    if not user:
+        return jsonify({'success': False, 'message': 'Użytkownik nie istnieje'}), 404
+    
+    data = request.get_json()
+    password = data.get('password', '')
+    
+    if user.check_password(password):
+        return jsonify({'success': True, 'message': 'Hasło poprawne'})
+    else:
+        return jsonify({'success': False, 'message': 'Nieprawidłowe hasło'}), 400
