@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📋 Daily Quests - World.Inc</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('home') }}">
+                <i class="fas fa-globe-americas"></i> World.Inc
+            </a>
+            
+            <div class="navbar-nav ms-auto">
+                {% if current_user %}
+                    <a class="nav-link" href="{{ url_for('minigames.index') }}">
+                        <i class="fas fa-gamepad"></i> Games
+                    </a>
+                    <a class="nav-link" href="{{ url_for('leaderboard.index') }}">
+                        <i class="fas fa-trophy"></i> Leaderboard
+                    </a>
+                    <a class="nav-link" href="{{ url_for('achievements.index') }}">
+                        <i class="fas fa-medal"></i> Achievements
+                    </a>
+                    <a class="nav-link active" href="{{ url_for('quests.index') }}">
+                        <i class="fas fa-tasks"></i> Quests
+                    </a>
+                    <a class="nav-link" href="{{ url_for('auth.logout') }}">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                {% else %}
+                    <a class="nav-link" href="{{ url_for('auth.login') }}">
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-fluid py-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card bg-gradient" style="background: linear-gradient(135deg, rgba(40, 167, 69, 0.2), rgba(32, 201, 151, 0.2));">
+                    <div class="card-body text-center py-5">
+                        <h1 class="display-4 text-white mb-3">
+                            <i class="fas fa-tasks text-success"></i>
+                            Daily Missions
+                        </h1>
+                        <p class="lead text-white-75 mb-4">
+                            Complete daily challenges to earn rewards and advance your agent rank
+                        </p>
+                        
+                        <!-- Daily Progress -->
+                        {% if current_user %}
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <div class="h2 text-success mb-1" id="completedToday">-</div>
+                                    <div class="text-white-75 small">Completed Today</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <div class="h2 text-info mb-1" id="totalToday">-</div>
+                                    <div class="text-white-75 small">Available Today</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <div class="h2 text-warning mb-1" id="pointsToday">-</div>
+                                    <div class="text-white-75 small">Points Earned</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <div class="h2 text-primary mb-1" id="completionRate">-</div>
+                                    <div class="text-white-75 small">Completion Rate</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="row">
+                            <div class="col-12">
+                                <p class="text-white-75">
+                                    <a href="{{ url_for('auth.login') }}" class="text-warning">Login</a> to access daily missions
+                                </p>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quest Timer -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center py-3">
+                        <div class="d-flex justify-content-center align-items-center">
+                            <i class="fas fa-clock text-warning me-3" style="font-size: 1.5rem;"></i>
+                            <div>
+                                <div class="text-white h5 mb-1">Next Quest Reset</div>
+                                <div class="text-warning h4 mb-0" id="questTimer">--:--:--</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Today's Quests -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h3 class="text-white mb-0">
+                            <i class="fas fa-calendar-day"></i>
+                            Today's Missions
+                        </h3>
+                        <button class="btn btn-outline-light btn-sm" onclick="refreshQuests()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="questsContainer">
+                            <div class="text-center py-5">
+                                <i class="fas fa-spinner fa-spin text-info" style="font-size: 3rem;"></i>
+                                <h5 class="text-white mt-3">Loading Missions...</h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quest Stats -->
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="text-white mb-0">
+                            <i class="fas fa-chart-line"></i>
+                            Quest Statistics
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div id="questStats">
+                            <div class="text-center py-3">
+                                <i class="fas fa-spinner fa-spin text-muted"></i>
+                                <p class="text-white-50 mt-2">Loading statistics...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="text-white mb-0">
+                            <i class="fas fa-fire"></i>
+                            Current Streak
+                        </h4>
+                    </div>
+                    <div class="card-body text-center">
+                        <div class="display-1 text-warning mb-3" id="currentStreak">-</div>
+                        <div class="text-white-75">
+                            <div class="h5">Days in a row</div>
+                            <small class="text-muted">Complete at least one quest daily to maintain your streak</small>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-warning" id="streakProgress" style="width: 0%"></div>
+                            </div>
+                            <small class="text-white-50 mt-2 d-block">Next streak milestone: <span id="nextMilestone">7 days</span></small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quest Details Modal -->
+    <div class="modal fade" id="questModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content bg-dark">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-white" id="questModalTitle">Quest Details</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="questModalBody">
+                    <!-- Content will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Global variables
+        let currentQuests = [];
+        let questTimer = null;
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDailyQuests();
+            loadQuestStats();
+            startQuestTimer();
+            
+            // Auto-refresh every 5 minutes
+            setInterval(() => {
+                refreshQuests();
+            }, 300000);
+        });
+        
+        // Load daily quests
+        async function loadDailyQuests() {
+            try {
+                const response = await fetch('/quests/api/daily');
+                const data = await response.json();
+                
+                currentQuests = data.quests;
+                displayQuests(currentQuests);
+                updateDailyStats(data);
+                
+            } catch (error) {
+                console.error('Failed to load quests:', error);
+                document.getElementById('questsContainer').innerHTML = `
+                    <div class="text-center py-5">
+                        <i class="fas fa-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+                        <h5 class="text-white mt-3">Failed to Load Missions</h5>
+                        <p class="text-white-50">Please try refreshing the page</p>
+                        <button class="btn btn-outline-info" onclick="loadDailyQuests()">
+                            <i class="fas fa-redo"></i> Retry
+                        </button>
+                    </div>
+                `;
+            }
+        }
+        
+        // Display quests
+        function displayQuests(quests) {
+            const container = document.getElementById('questsContainer');
+            
+            if (quests.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-5">
+                        <i class="fas fa-tasks text-muted" style="font-size: 4rem; opacity: 0.3;"></i>
+                        <h5 class="text-white mt-3">No Missions Available</h5>
+                        <p class="text-white-50">Check back tomorrow for new daily missions</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = quests.map(quest => `
+                <div class="quest-card ${quest.completed ? 'completed' : ''}" onclick="showQuestDetails(${quest.id})">
+                    <div class="d-flex align-items-start">
+                        <div class="quest-icon me-3">
+                            <i class="fas fa-${quest.icon}"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <div class="quest-title">${quest.name}</div>
+                                    <div class="quest-difficulty ${quest.difficulty}">
+                                        ${quest.difficulty.toUpperCase()}
+                                    </div>
+                                </div>
+                                <div class="quest-reward">
+                                    <i class="fas fa-star"></i>
+                                    ${quest.reward_points} pts
+                                </div>
+                            </div>
+                            
+                            <div class="quest-description">${quest.description}</div>
+                            
+                            <div class="quest-progress mt-3">
+                                <div class="quest-progress-text">
+                                    <span>Progress: ${quest.progress}/${quest.target_value}</span>
+                                    <span>${quest.progress_percentage.toFixed(1)}%</span>
+                                </div>
+                                <div class="quest-progress-bar">
+                                    <div class="quest-progress-fill" style="width: ${quest.progress_percentage}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Add animations
+            setTimeout(() => {
+                document.querySelectorAll('.quest-card').forEach((card, index) => {
+                    setTimeout(() => {
+                        card.style.animation = 'slideInLeft 0.5s ease-out';
+                    }, index * 100);
+                });
+            }, 100);
+        }
+        
+        // Update daily statistics
+        function updateDailyStats(data) {
+            document.getElementById('completedToday').textContent = data.completed;
+            document.getElementById('totalToday').textContent = data.total;
+            
+            const pointsEarned = currentQuests
+                .filter(q => q.completed)
+                .reduce((sum, q) => sum + q.reward_points, 0);
+            
+            const completionRate = data.total > 0 ? ((data.completed / data.total) * 100).toFixed(1) : 0;
+            
+            document.getElementById('pointsToday').textContent = pointsEarned;
+            document.getElementById('completionRate').textContent = completionRate + '%';
+        }
+        
+        // Load quest statistics
+        async function loadQuestStats() {
+            try {
+                // Load global stats
+                const globalResponse = await fetch('/quests/api/stats');
+                const globalData = await globalResponse.json();
+                
+                // Load user stats if logged in
+                {% if current_user %}
+                const userResponse = await fetch('/quests/api/user/{{ current_user.id }}/stats');
+                const userData = await userResponse.json();
+                
+                displayQuestStats(globalData, userData);
+                {% else %}
+                displayQuestStats(globalData, null);
+                {% endif %}
+                
+            } catch (error) {
+                console.error('Failed to load quest stats:', error);
+                document.getElementById('questStats').innerHTML = `
+                    <div class="text-center py-3">
+                        <i class="fas fa-exclamation-triangle text-warning"></i>
+                        <p class="text-white-50 mt-2">Failed to load statistics</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Display quest statistics
+        function displayQuestStats(globalData, userData) {
+            const container = document.getElementById('questStats');
+            
+            container.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-white-75 mb-3">
+                            <i class="fas fa-globe"></i> Global Statistics
+                        </h6>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span class="text-white-75">Today's Quests:</span>
+                                <span class="text-info">${globalData.today_quests}</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span class="text-white-75">Completions Today:</span>
+                                <span class="text-success">${globalData.today_completions}</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span class="text-white-75">Active Agents:</span>
+                                <span class="text-warning">${globalData.active_questers_today}</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span class="text-white-75">Completion Rate:</span>
+                                <span class="text-primary">${globalData.completion_rate_today}%</span>
+                            </div>
+                        </div>
+                        ${globalData.most_popular_quest_type ? `
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span class="text-white-75">Popular Quest Type:</span>
+                                <span class="text-info">${formatQuestType(globalData.most_popular_quest_type)}</span>
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="col-md-6">
+                        ${userData ? `
+                        <h6 class="text-white-75 mb-3">
+                            <i class="fas fa-user"></i> Your Statistics
+                        </h6>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span class="text-white-75">Monthly Completed:</span>
+                                <span class="text-success">${userData.monthly_completed}</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span class="text-white-75">Monthly Points:</span>
+                                <span class="text-warning">${userData.monthly_points}</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span class="text-white-75">Today Completed:</span>
+                                <span class="text-info">${userData.today_completed}/${userData.today_total}</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span class="text-white-75">Current Streak:</span>
+                                <span class="text-primary">${userData.current_streak} days</span>
+                            </div>
+                        </div>
+                        ` : `
+                        <h6 class="text-white-75 mb-3">
+                            <i class="fas fa-sign-in-alt"></i> Login Required
+                        </h6>
+                        <p class="text-white-50">
+                            <a href="/auth/login" class="text-warning">Login</a> to view your personal quest statistics and track your progress.
+                        </p>
+                        `}
+                    </div>
+                </div>
+            `;
+            
+            // Update streak display
+            if (userData) {
+                document.getElementById('currentStreak').textContent = userData.current_streak;
+                updateStreakProgress(userData.current_streak);
+            }
+        }
+        
+        // Update streak progress
+        function updateStreakProgress(streak) {
+            const milestones = [7, 14, 30, 60, 100];
+            let nextMilestone = milestones.find(m => m > streak) || milestones[milestones.length - 1];
+            let progress = 0;
+            
+            if (streak >= milestones[milestones.length - 1]) {
+                progress = 100;
+                nextMilestone = "MAX";
+            } else {
+                const prevMilestone = milestones.filter(m => m <= streak).pop() || 0;
+                progress = ((streak - prevMilestone) / (nextMilestone - prevMilestone)) * 100;
+            }
+            
+            document.getElementById('streakProgress').style.width = progress + '%';
+            document.getElementById('nextMilestone').textContent = nextMilestone === "MAX" ? "Maximum reached!" : nextMilestone + ' days';
+        }
+        
+        // Start quest reset timer
+        function startQuestTimer() {
+            function updateTimer() {
+                const now = new Date();
+                const tomorrow = new Date(now);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                tomorrow.setHours(0, 0, 0, 0);
+                
+                const diff = tomorrow - now;
+                const hours = Math.floor(diff / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                
+                document.getElementById('questTimer').textContent = 
+                    `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+            
+            updateTimer();
+            questTimer = setInterval(updateTimer, 1000);
+        }
+        
+        // Refresh quests
+        function refreshQuests() {
+            loadDailyQuests();
+            loadQuestStats();
+        }
+        
+        // Show quest details in modal
+        function showQuestDetails(questId) {
+            const quest = currentQuests.find(q => q.id === questId);
+            if (!quest) return;
+            
+            document.getElementById('questModalTitle').innerHTML = `
+                <i class="fas fa-${quest.icon} text-${quest.completed ? 'success' : 'warning'} me-2"></i>
+                ${quest.name}
+            `;
+            
+            document.getElementById('questModalBody').innerHTML = `
+                <div class="row">
+                    <div class="col-md-3 text-center">
+                        <i class="fas fa-${quest.icon}" style="font-size: 4rem; color: ${quest.completed ? '#28a745' : '#ffc107'};"></i>
+                        <div class="mt-3">
+                            <div class="badge ${quest.completed ? 'bg-success' : 'bg-warning'} px-3 py-2">
+                                ${quest.completed ? 'COMPLETED' : 'IN PROGRESS'}
+                            </div>
+                        </div>
+                        <div class="quest-difficulty ${quest.difficulty} mt-2">
+                            ${quest.difficulty.toUpperCase()}
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <h5 class="text-white">${quest.name}</h5>
+                        <p class="text-white-75">${quest.description}</p>
+                        
+                        <div class="row mt-4">
+                            <div class="col-sm-4">
+                                <div class="bg-warning bg-opacity-25 rounded p-3 text-center">
+                                    <div class="h4 text-warning mb-1">${quest.reward_points}</div>
+                                    <div class="small text-white-75">Points Reward</div>
+                                </div>
+                            </div>
+                            <div class="col-sm-4">
+                                <div class="bg-info bg-opacity-25 rounded p-3 text-center">
+                                    <div class="h4 text-info mb-1">${quest.progress}/${quest.target_value}</div>
+                                    <div class="small text-white-75">Progress</div>
+                                </div>
+                            </div>
+                            <div class="col-sm-4">
+                                <div class="bg-primary bg-opacity-25 rounded p-3 text-center">
+                                    <div class="h4 text-primary mb-1">${quest.progress_percentage.toFixed(1)}%</div>
+                                    <div class="small text-white-75">Completion</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <div class="progress" style="height: 12px;">
+                                <div class="progress-bar ${quest.completed ? 'bg-success' : 'bg-info'}" 
+                                     style="width: ${quest.progress_percentage}%"></div>
+                            </div>
+                        </div>
+                        
+                        ${quest.completed ? `
+                            <div class="mt-4 p-3 bg-success bg-opacity-25 rounded">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    <div>
+                                        <div class="text-white">Mission Completed!</div>
+                                        <small class="text-white-75">You earned ${quest.reward_points} points</small>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : `
+                            <div class="mt-4 p-3 bg-info bg-opacity-25 rounded">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-clock text-info me-2"></i>
+                                    <div>
+                                        <div class="text-white">Mission in Progress</div>
+                                        <small class="text-white-75">${getQuestTip(quest.quest_type)}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        `}
+                    </div>
+                </div>
+            `;
+            
+            new bootstrap.Modal(document.getElementById('questModal')).show();
+        }
+        
+        // Helper functions
+        function formatQuestType(questType) {
+            const types = {
+                'play_games': 'Play Games',
+                'score_points': 'Score Points',
+                'play_specific_game': 'Specific Game',
+                'single_game_score': 'High Score',
+                'time_limit': 'Speed Run'
+            };
+            return types[questType] || questType;
+        }
+        
+        function getQuestTip(questType) {
+            const tips = {
+                'play_games': 'Complete any games to make progress',
+                'score_points': 'Earn points in any game mode',
+                'play_specific_game': 'Focus on the specified game',
+                'single_game_score': 'Aim for a high score in one game',
+                'time_limit': 'Complete games quickly'
+            };
+            return tips[questType] || 'Keep playing to complete this quest';
+        }
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.target.tagName === 'INPUT') return;
+            
+            switch(e.key) {
+                case 'r':
+                case 'R':
+                    refreshQuests();
+                    break;
+            }
+        });
+        
+        // Clean up timer on page unload
+        window.addEventListener('beforeunload', function() {
+            if (questTimer) {
+                clearInterval(questTimer);
+            }
+        });
+    </script>
+    
+    <style>
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .quest-card {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .quest-card:hover {
+            transform: translateX(5px);
+        }
+        
+        #questTimer {
+            font-family: 'Courier New', monospace;
+            letter-spacing: 2px;
+        }
+    </style>
+</body>
+</html>

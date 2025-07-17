@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏆 Achievements - World.Inc</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('home') }}">
+                <i class="fas fa-globe-americas"></i> World.Inc
+            </a>
+            
+            <div class="navbar-nav ms-auto">
+                {% if current_user %}
+                    <a class="nav-link" href="{{ url_for('minigames.index') }}">
+                        <i class="fas fa-gamepad"></i> Games
+                    </a>
+                    <a class="nav-link" href="{{ url_for('leaderboard.index') }}">
+                        <i class="fas fa-trophy"></i> Leaderboard
+                    </a>
+                    <a class="nav-link active" href="{{ url_for('achievements.index') }}">
+                        <i class="fas fa-medal"></i> Achievements
+                    </a>
+                    <a class="nav-link" href="{{ url_for('quests.index') }}">
+                        <i class="fas fa-tasks"></i> Quests
+                    </a>
+                    <a class="nav-link" href="{{ url_for('auth.logout') }}">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </a>
+                {% else %}
+                    <a class="nav-link" href="{{ url_for('auth.login') }}">
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-fluid py-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card bg-gradient" style="background: linear-gradient(135deg, rgba(255, 193, 7, 0.2), rgba(255, 126, 20, 0.2));">
+                    <div class="card-body text-center py-5">
+                        <h1 class="display-4 text-white mb-3">
+                            <i class="fas fa-medal text-warning"></i>
+                            Achievements
+                        </h1>
+                        <p class="lead text-white-75 mb-4">
+                            Track your progress and unlock exclusive rewards
+                        </p>
+                        
+                        <!-- User Stats -->
+                        <div class="row" id="userStatsRow">
+                            {% if current_user %}
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <div class="h2 text-primary mb-1" id="completionRate">-</div>
+                                    <div class="text-white-75 small">Completion</div>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="col-12">
+                                <p class="text-white-75">
+                                    <a href="{{ url_for('auth.login') }}" class="text-warning">Login</a> to track your achievements
+                                </p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <ul class="nav nav-pills justify-content-center" id="achievementTabs">
+                            <li class="nav-item">
+                                <button class="nav-link active" data-filter="all">
+                                    <i class="fas fa-globe"></i> All Achievements
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" data-filter="unlocked">
+                                    <i class="fas fa-unlock text-success"></i> Unlocked
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" data-filter="locked">
+                                    <i class="fas fa-lock text-muted"></i> Locked
+                                </button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" data-filter="recent">
+                                    <i class="fas fa-clock text-info"></i> Recent
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Achievements Grid -->
+        <div class="row" id="achievementsContainer">
+            <div class="col-12 text-center py-5">
+                <i class="fas fa-spinner fa-spin text-info" style="font-size: 3rem;"></i>
+                <h5 class="text-white mt-3">Loading Achievements...</h5>
+            </div>
+        </div>
+
+        <!-- Recent Achievements -->
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4 class="text-white mb-0">
+                            <i class="fas fa-star text-warning"></i>
+                            Recent Unlocks
+                        </h4>
+                        <button class="btn btn-outline-light btn-sm" onclick="loadRecentAchievements()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="recentAchievements">
+                            <div class="text-center py-3">
+                                <i class="fas fa-spinner fa-spin text-muted"></i>
+                                <p class="text-white-50 mt-2">Loading recent achievements...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Achievement Modal -->
+    <div class="modal fade" id="achievementModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content bg-dark">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-white" id="modalTitle">Achievement Details</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="modalBody">
+                    <!-- Content will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Global variables
+        let allAchievements = [];
+        let currentFilter = 'all';
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAchievements();
+            loadRecentAchievements();
+            setupFilterTabs();
+        });
+        
+        // Setup filter tabs
+        function setupFilterTabs() {
+            document.querySelectorAll('#achievementTabs .nav-link').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Update active tab
+                    document.querySelectorAll('#achievementTabs .nav-link').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Apply filter
+                    currentFilter = this.getAttribute('data-filter');
+                    filterAchievements();
+                });
+            });
+        }
+        
+        // Load achievements from API
+        async function loadAchievements() {
+            try {
+                const response = await fetch('/achievements/api/list');
+                const data = await response.json();
+                
+                allAchievements = data.achievements;
+                displayAchievements(allAchievements);
+                updateUserStats();
+                
+            } catch (error) {
+                console.error('Failed to load achievements:', error);
+                document.getElementById('achievementsContainer').innerHTML = `
+                    <div class="col-12 text-center py-5">
+                        <i class="fas fa-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+                        <h5 class="text-white mt-3">Failed to Load Achievements</h5>
+                        <p class="text-white-50">Please try refreshing the page</p>
+                        <button class="btn btn-outline-info" onclick="loadAchievements()">
+                            <i class="fas fa-redo"></i> Retry
+                        </button>
+                    </div>
+                `;
+            }
+        }
+        
+        // Display achievements in grid
+        function displayAchievements(achievements) {
+            const container = document.getElementById('achievementsContainer');
+            
+            if (achievements.length === 0) {
+                container.innerHTML = `
+                    <div class="col-12 text-center py-5">
+                        <i class="fas fa-medal text-muted" style="font-size: 4rem; opacity: 0.3;"></i>
+                        <h5 class="text-white mt-3">No Achievements Found</h5>
+                        <p class="text-white-50">Try adjusting your filter</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = achievements.map(achievement => `
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="achievement-card ${achievement.unlocked ? 'unlocked' : ''}" 
+                         onclick="showAchievementDetails(${achievement.id})">
+                        <div class="achievement-icon">
+                            <i class="fas fa-${achievement.icon}"></i>
+                        </div>
+                        <div class="achievement-title">${achievement.name}</div>
+                        <div class="achievement-description">${achievement.description}</div>
+                        
+                        ${!achievement.unlocked && achievement.progress !== undefined ? `
+                            <div class="achievement-progress">
+                                <div class="achievement-progress-bar">
+                                    <div class="achievement-progress-fill" style="width: ${achievement.progress}%"></div>
+                                </div>
+                                <small class="text-white-50 mt-1 d-block">${achievement.progress.toFixed(1)}% Complete</small>
+                            </div>
+                        ` : ''}
+                        
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <div class="achievement-points">${achievement.points} Points</div>
+                            ${achievement.unlocked ? `
+                                <small class="text-success">
+                                    <i class="fas fa-check"></i> Unlocked
+                                    ${achievement.unlocked_at ? `<br><span class="text-muted">${formatDate(achievement.unlocked_at)}</span>` : ''}
+                                </small>
+                            ` : `
+                                <small class="text-muted">
+                                    <i class="fas fa-lock"></i> Locked
+                                </small>
+                            `}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Add animations
+            setTimeout(() => {
+                document.querySelectorAll('.achievement-card').forEach((card, index) => {
+                    setTimeout(() => {
+                        card.style.animation = 'fadeInUp 0.5s ease-out';
+                    }, index * 100);
+                });
+            }, 100);
+        }
+        
+        // Filter achievements
+        function filterAchievements() {
+            let filteredAchievements = [];
+            
+            switch(currentFilter) {
+                case 'unlocked':
+                    filteredAchievements = allAchievements.filter(a => a.unlocked);
+                    break;
+                case 'locked':
+                    filteredAchievements = allAchievements.filter(a => !a.unlocked);
+                    break;
+                case 'recent':
+                    filteredAchievements = allAchievements
+                        .filter(a => a.unlocked && a.unlocked_at)
+                        .sort((a, b) => new Date(b.unlocked_at) - new Date(a.unlocked_at))
+                        .slice(0, 12);
+                    break;
+                default:
+                    filteredAchievements = allAchievements;
+            }
+            
+            displayAchievements(filteredAchievements);
+        }
+        
+        // Update user statistics
+        function updateUserStats() {
+            const unlocked = allAchievements.filter(a => a.unlocked).length;
+            const total = allAchievements.length;
+            const points = allAchievements.filter(a => a.unlocked).reduce((sum, a) => sum + a.points, 0);
+            const completion = total > 0 ? ((unlocked / total) * 100).toFixed(1) : 0;
+            
+            document.getElementById('unlockedCount').textContent = unlocked;
+            document.getElementById('totalCount').textContent = total;
+            document.getElementById('totalPoints').textContent = points;
+            document.getElementById('completionRate').textContent = completion + '%';
+        }
+        
+        // Load recent achievements across all users
+        async function loadRecentAchievements() {
+            try {
+                const response = await fetch('/achievements/api/recent');
+                const data = await response.json();
+                
+                const container = document.getElementById('recentAchievements');
+                
+                if (data.recent_achievements.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-3">
+                            <i class="fas fa-clock text-muted"></i>
+                            <p class="text-white-50 mt-2">No recent achievements</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = data.recent_achievements.map(achievement => `
+                    <div class="d-flex align-items-center mb-3 p-3 rounded" 
+                         style="background: rgba(255, 255, 255, 0.05); border-left: 4px solid #ffc107;">
+                        <div class="me-3">
+                            <i class="fas fa-${achievement.achievement_icon} text-warning" style="font-size: 1.5rem;"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="text-white">
+                                <strong class="text-info">${achievement.username}</strong> unlocked
+                                <strong class="text-warning">${achievement.achievement_name}</strong>
+                            </div>
+                            <small class="text-muted">${achievement.time_ago} • ${achievement.points} points</small>
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Failed to load recent achievements:', error);
+                document.getElementById('recentAchievements').innerHTML = `
+                    <div class="text-center py-3">
+                        <i class="fas fa-exclamation-triangle text-warning"></i>
+                        <p class="text-white-50 mt-2">Failed to load recent achievements</p>
+                    </div>
+                `;
+            }
+        }
+        
+        // Show achievement details in modal
+        function showAchievementDetails(achievementId) {
+            const achievement = allAchievements.find(a => a.id === achievementId);
+            if (!achievement) return;
+            
+            document.getElementById('modalTitle').innerHTML = `
+                <i class="fas fa-${achievement.icon} text-warning me-2"></i>
+                ${achievement.name}
+            `;
+            
+            document.getElementById('modalBody').innerHTML = `
+                <div class="row">
+                    <div class="col-md-3 text-center">
+                        <i class="fas fa-${achievement.icon}" style="font-size: 4rem; color: ${achievement.unlocked ? '#ffc107' : '#6c757d'};"></i>
+                        <div class="mt-3">
+                            <div class="badge ${achievement.unlocked ? 'bg-success' : 'bg-secondary'} px-3 py-2">
+                                ${achievement.unlocked ? 'UNLOCKED' : 'LOCKED'}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <h5 class="text-white">${achievement.name}</h5>
+                        <p class="text-white-75">${achievement.description}</p>
+                        
+                        <div class="row mt-4">
+                            <div class="col-sm-6">
+                                <div class="bg-primary bg-opacity-25 rounded p-3 text-center">
+                                    <div class="h4 text-primary mb-1">${achievement.points}</div>
+                                    <div class="small text-white-75">Points Reward</div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="bg-info bg-opacity-25 rounded p-3 text-center">
+                                    <div class="h4 text-info mb-1">${achievement.category || 'General'}</div>
+                                    <div class="small text-white-75">Category</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        ${achievement.unlocked ? `
+                            <div class="mt-4 p-3 bg-success bg-opacity-25 rounded">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-calendar text-success me-2"></i>
+                                    <div>
+                                        <div class="text-white">Unlocked on ${formatDate(achievement.unlocked_at)}</div>
+                                        <small class="text-white-75">Great job, agent!</small>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : `
+                            ${achievement.progress !== undefined ? `
+                                <div class="mt-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="text-white-75">Progress</span>
+                                        <span class="text-info">${achievement.progress.toFixed(1)}%</span>
+                                    </div>
+                                    <div class="progress" style="height: 8px;">
+                                        <div class="progress-bar bg-info" style="width: ${achievement.progress}%"></div>
+                                    </div>
+                                </div>
+                            ` : `
+                                <div class="mt-4 p-3 bg-warning bg-opacity-25 rounded">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-lock text-warning me-2"></i>
+                                        <div>
+                                            <div class="text-white">Achievement Locked</div>
+                                            <small class="text-white-75">Keep playing to unlock this achievement!</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            `}
+                        `}
+                    </div>
+                </div>
+            `;
+            
+            new bootstrap.Modal(document.getElementById('achievementModal')).show();
+        }
+        
+        // Helper functions
+        function formatDate(dateString) {
+            if (!dateString) return 'Unknown';
+            try {
+                const date = new Date(dateString);
+                return date.toLocaleDateString() + ' at ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            } catch {
+                return dateString;
+            }
+        }
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.target.tagName === 'INPUT') return; // Don't interfere with inputs
+            
+            switch(e.key) {
+                case '1':
+                    document.querySelector('[data-filter="all"]').click();
+                    break;
+                case '2':
+                    document.querySelector('[data-filter="unlocked"]').click();
+                    break;
+                case '3':
+                    document.querySelector('[data-filter="locked"]').click();
+                    break;
+                case '4':
+                    document.querySelector('[data-filter="recent"]').click();
+                    break;
+                case 'r':
+                case 'R':
+                    loadAchievements();
+                    break;
+            }
+        });
+        
+        // Auto-refresh every 2 minutes
+        setInterval(() => {
+            loadRecentAchievements();
+        }, 120000);
+    </script>
+    
+    <style>
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .nav-pills .nav-link {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-radius: 25px;
+            margin: 0 0.25rem;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-pills .nav-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .nav-pills .nav-link.active {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3);
+        }
+    </style>
+</body>
+</html>
